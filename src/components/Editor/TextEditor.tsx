@@ -16,7 +16,7 @@ import { GlassCard } from '@developer-hub/liquid-glass';
 
 const TextEditor = () => {
   return (
-    <GlassCard>
+    <GlassCard cornerRadius={50}>
     <Box
       sx={{
         // ...glassmorphismStyle,

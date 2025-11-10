@@ -28,6 +28,7 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
   return (
+    // <GlassCard>
     <Drawer
       open={open}
       onClose={onClose}
@@ -46,11 +47,11 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
             url(${SIDEBAR_BG_URL}), 
             linear-gradient(
               180deg, 
-              rgba(1, 62, 106, 0.75), 
-              rgba(67, 209, 255, 0.75), 
-              rgba(1, 62, 106, 0.75), 
-              rgba(65, 154, 214, 0.75), 
-              rgba(1, 24, 106, 0.75)
+              rgba(1, 62, 106, 0.6), 
+              rgba(67, 209, 255, 0.6), 
+              rgba(1, 62, 106, 0.6), 
+              rgba(65, 154, 214, 0.6), 
+              rgba(1, 24, 106, 0.6)
             )
           `,
           backgroundSize: 'cover, cover',
@@ -65,6 +66,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
         },
       }}
     >
+      
       <Box sx={{ padding: 2, overflow: 'auto' }}>
         <Typography variant="h6" sx={{ color: 'white', mb: 2, textAlign: 'center' }}>
           Menu
@@ -92,6 +94,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
         </List>
       </Box>
     </Drawer>
+
   );
 };
 

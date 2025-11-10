@@ -1,23 +1,28 @@
 import React from 'react';
 import { Box, TextField } from '@mui/material';
+import { GlassCard } from '@developer-hub/liquid-glass';
 
-// Style chung cho Glassmorphism
-const glassmorphismStyle = {
-  // backgroundColor: 'rgba(2, 83, 104, 0.5)', // Màu xanh mòng két (teal) trong suốt
-  backgroundColor: 'rgba(25, 55, 90, 0.5)',
-  backdropFilter: 'blur(12px)',
-  boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
-  borderRadius: '15px',
-  border: '1px solid rgba(255, 255, 255, 0.18)',
-};
+// // Style chung cho Glassmorphism
+// const glassmorphismStyle = {
+//   // backgroundColor: 'rgba(2, 83, 104, 0.5)', // Màu xanh mòng két (teal) trong suốt
+//   // backgroundColor: 'rgba(25, 55, 90, 0.5)',
+//   background: 'linear-gradient(180deg, rgba(17,51,32,0.6), rgba(38,141,124,0.6), rgba(194,255,180,0.6))',
+
+//   backdropFilter: 'blur(12px)',
+//   boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+//   borderRadius: '15px',
+//   border: '1px solid rgba(255, 255, 255, 0.18)',
+// };
 
 const TextEditor = () => {
   return (
+    <GlassCard>
     <Box
       sx={{
-        ...glassmorphismStyle,
+        // ...glassmorphismStyle,
+        background: 'linear-gradient(180deg, rgba(17,51,32,0.6), rgba(38,141,124,0.6), rgba(194,255,180,0.6))',
         width: { xs: '90vw', md: '50vw' }, // Responsive
-        height: '85vh',
+        height: '90vh',
         padding: '24px',
         boxSizing: 'border-box',
         display: 'flex', // Sử dụng flex để TextField lấp đầy
@@ -47,10 +52,28 @@ const TextEditor = () => {
             color: 'rgba(255, 255, 255, 0.7)', // Màu placeholder
             opacity: 1,
           },
+
+          '&::-webkit-scrollbar': {
+            width: '6px',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: 'rgba(0,0,0,0.5)',
+            borderRadius: '3px',
+          },
+          '&::-webkit-scrollbar-thumb:hover': {
+            background: 'rgba(0,0,0,0.8)',
+          },
+          '&::-webkit-scrollbar-track': {
+            background: 'transparent',
+          },
+          scrollbarWidth: 'thin', // Firefox
+          scrollbarColor: 'rgba(0,0,0,0.5) transparent',
+
         }}
         
       />
     </Box>
+    </GlassCard>
   );
 };
 

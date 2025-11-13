@@ -6,9 +6,15 @@ import { Box, Typography } from "@mui/material";
 interface ChatBubbleProps {
   message: string;
   isUser?: boolean;
+  visible?: boolean;
 }
 
-export default function ChatBubble({ message, isUser }: ChatBubbleProps) {
+import { GlassCard } from "@developer-hub/liquid-glass";
+export default function ChatBubble({
+  message,
+  isUser,
+  visible,
+}: ChatBubbleProps) {
   return (
     <Box
       sx={{
@@ -26,7 +32,7 @@ export default function ChatBubble({ message, isUser }: ChatBubbleProps) {
           py: 1.5,
           borderRadius: "16px",
           backdropFilter: "blur(12px)",
-          background: "rgba(255, 255, 255, 0.5)",
+          background: "rgba(255, 255, 255, 0.8)",
           border: "1px solid rgba(255, 255, 255, 0.25)",
           boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
           color: "black",

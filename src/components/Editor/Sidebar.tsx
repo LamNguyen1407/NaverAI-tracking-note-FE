@@ -12,6 +12,7 @@ import {
   Tabs,
   Tab,
 } from "@mui/material";
+import { useRouter, usePathname } from "next/navigation";
 
 import NoteOutlinedIcon from "@mui/icons-material/NoteOutlined";
 import FolderOutlinedIcon from "@mui/icons-material/FolderOutlined";
@@ -42,6 +43,8 @@ const mockData: Record<string, string[]> = {
 const Sidebar: React.FC<SidebarProps> = ({ open, onClose, current }) => {
   const [tab, setTab] = useState(current || "Note");
 
+  const router = useRouter();
+  const pathname = usePathname();
   return (
     <Drawer
       open={open}
@@ -86,7 +89,19 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, current }) => {
         {/* Tabs category */}
         <Tabs
           value={tab}
-          onChange={(e, v) => setTab(v)}
+          onChange={(e, v) => {
+            setTab(v);
+
+            const target =
+              v === "Note"
+                ? "/content/editor"
+                : v === "Files"
+                ? "/content/files"
+                : "/content/chat";
+
+            // ⚡ Check nếu đang ở trang đó rồi thì không chuyển
+            if (pathname !== target) router.push(target as any);
+          }}
           TabIndicatorProps={{ style: { backgroundColor: "black" } }}
           sx={{
             mb: 2,

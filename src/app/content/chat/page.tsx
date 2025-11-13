@@ -7,17 +7,20 @@ import { GlassCard } from "@developer-hub/liquid-glass";
 import SendIcon from "@mui/icons-material/Send";
 import { TbSend } from "react-icons/tb";
 
+import LiquidGlassWrapper from "@/components/Chat/LiquidGlass";
 import ChatBubble from "@/components/Chat/ChatBubble";
+import { useSidebar } from "@/context/SidebarContext";
 
 const MENU_ICON_URL = "/assets/starfish.png";
 const MAIN_BG_URL = "/assets/chat2.png";
 
 function Chat() {
-  const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const { toggleSidebar } = useSidebar();
+  // const [isSidebarOpen, setSidebarOpen] = useState(false);
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!isSidebarOpen);
-  };
+  // const toggleSidebar = () => {
+  //   setSidebarOpen(!isSidebarOpen);
+  // };
 
   return (
     <Box
@@ -63,11 +66,11 @@ function Chat() {
             border: "1px solid rgba(255, 255, 255, 0.1)",
             transition: "transform 0.2s",
             "&:hover": { transform: "scale(1.1)" },
-            opacity: isSidebarOpen ? 0.8 : 1,
+            // opacity: isSidebarOpen ? 0.8 : 1,
           }}
         />
 
-        <Sidebar open={isSidebarOpen} onClose={toggleSidebar} current="Chat" />
+        {/* <Sidebar open={isSidebarOpen} onClose={toggleSidebar} current="Chat" /> */}
 
         {/* Chat area*/}
         {/* Chat area */}
@@ -88,112 +91,52 @@ function Chat() {
               justifyContent: "space-between",
             }}
           >
-            {/* Khung tin nhắn */}
-            <Box
-              sx={{
-                flex: 1,
-                minHeight: 0,
-                maxHeight: "100%",
-                height: "100%",
-                width: "100%",
-                overflowY: "auto",
-                overflowX: "hidden",
+            <LiquidGlassWrapper borderRadius={14} blur={7}>
+              <Box
+                sx={{
+                  width: "100%",
+                  height: "100%",
+                  maxHeight: "38rem",
+                  padding: "25px",
+                  marginTop: "5px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "12px",
+                  borderRadius: "50px",
+                  overflowY: "auto", // ⚡ CHỈ SCROLL DỌC
+                  overflowX: "hidden", // ⚡ KHÔNG CHO SCROLL NGANG
 
-                borderRadius: "50px",
-
-                // ⭐ Scrollbar cho textarea
-                "& textarea::-webkit-scrollbar": {
-                  width: "6px",
-                },
-                "& textarea::-webkit-scrollbar-thumb": {
-                  background: "rgba(0,0,0,0.5)",
-                  borderRadius: "3px",
-                },
-                "& textarea::-webkit-scrollbar-thumb:hover": {
-                  background: "rgba(0,0,0,0.8)",
-                },
-                "& textarea::-webkit-scrollbar-track": {
-                  background: "transparent",
-                },
-
-                scrollbarWidth: "thin", // Firefox
-                scrollbarColor: "rgba(0,0,0,0.5) transparent",
-              }}
-            >
-              <GlassCard cornerRadius={25}>
-                <Box
-                  sx={{
-                    width: "100%",
-
-                    padding: "16px",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "12px",
-                    borderRadius: "50px",
-                    backdropFilter: "blur(15px)",
-                    overflowY: "auto", // ⚡ CHỈ SCROLL DỌC
-                    overflowX: "hidden", // ⚡ KHÔNG CHO SCROLL NGANG
-
-                    "&::-webkit-scrollbar": {
-                      width: "6px",
-                    },
-                    "&::-webkit-scrollbar-thumb": {
-                      background: "rgba(0,0,0,0.5)",
-                      borderRadius: "3px",
-                    },
-                    "&::-webkit-scrollbar-thumb:hover": {
-                      background: "rgba(0,0,0,0.8)",
-                    },
-                    "&::-webkit-scrollbar-track": {
-                      background: "transparent",
-                    },
-                    scrollbarWidth: "thin", // Firefox
-                    scrollbarColor: "rgba(0,0,0,0.5) transparent",
-                  }}
-                >
-                  <ChatBubble message="Xin chào! Tôi có thể giúp gì cho bạn?" />
-                  <ChatBubble
-                    message="Cho tôi xem giao diện chat nhé."
-                    isUser
-                  />
-                  <ChatBubble message="Xin chào! Tôi có thể giúp gì cho bạn?" />
-                  <ChatBubble
-                    message="Cho tôi xem giao diện chat nhé."
-                    isUser
-                  />
-                  <ChatBubble message="Xin chào! Tôi có thể giúp gì cho bạn?" />
-                  <ChatBubble
-                    message="Cho tôi xem giao diện chat nhé."
-                    isUser
-                  />
-                  <ChatBubble message="Xin chào! Tôi có thể giúp gì cho bạn?" />
-                  <ChatBubble
-                    message="Cho tôi xem giao diện chat nhé."
-                    isUser
-                  />
-                  <ChatBubble message="Xin chào! Tôi có thể giúp gì cho bạn?" />
-                  <ChatBubble
-                    message="1. Khung chat hơi nhỏ so với màn hình .
-                Với không gian nền khá lớn, hộp chat bị lọt thỏm vào giữa.
-                          Bạn có thể tăng width 10–20% hoặc đặt max-width ~600–700px để cân bằng hơn.
-2. Tỉ lệ tin nhắn chưa hài hòa
-
-Các bong bóng khá ngắn (chiều ngang nhỏ), khiến văn bản xuống dòng nhiều hơn cần thiết.
-
-Có thể tăng width bong bóng hoặc cho phép bong bóng tự co theo nội dung tối đa.
-
-3. Độ trong suốt/mờ của khung chat hơi quá mạnh
-
-Vì nền nhiều chi tiết, độ blur + transparency mạnh khiến chữ hơi khó tập trung.
-
-Nên giảm opacity nền (vd: rgba(255,255,255,0.7) → 0.8–0.9).
-
-4. Lặp lại tin nhắn nhiều gây cảm giác rối"
-                    isUser
-                  />
-                </Box>
-              </GlassCard>
-            </Box>
+                  "&::-webkit-scrollbar": {
+                    width: "6px",
+                  },
+                  "&::-webkit-scrollbar-thumb": {
+                    background: "rgba(0,0,0,0.5)",
+                    borderRadius: "3px",
+                  },
+                  "&::-webkit-scrollbar-thumb:hover": {
+                    background: "rgba(0,0,0,0.8)",
+                  },
+                  "&::-webkit-scrollbar-track": {
+                    background: "transparent",
+                  },
+                  scrollbarWidth: "thin", // Firefox
+                  scrollbarColor: "rgba(0,0,0,0.5) transparent",
+                }}
+              >
+                <ChatBubble message="Xin chào! Tôi có thể giúp gì cho bạn?" />
+                <ChatBubble message="Cho tôi xem giao diện chat nhé." isUser />
+                <ChatBubble message="Xin chào! Tôi có thể giúp gì cho bạn?" />
+                <ChatBubble message="Cho tôi xem giao diện chat nhé." isUser />
+                <ChatBubble message="Xin chào! Tôi có thể giúp gì cho bạn?" />
+                <ChatBubble message="Xin chào! Tôi có thể giúp gì cho bạn?" />
+                <ChatBubble message="Cho tôi xem giao diện chat nhé." isUser />
+                <ChatBubble message="Xin chào! Tôi có thể giúp gì cho bạn?" />
+                <ChatBubble message="Cho tôi xem giao diện chat nhé." isUser />
+                <ChatBubble message="Xin chào! Tôi có thể giúp gì cho bạn?" />
+              </Box>
+              {/* </GlassCard> */}
+            </LiquidGlassWrapper>
+            {/* </Box> */}
 
             {/* Input */}
             <Box

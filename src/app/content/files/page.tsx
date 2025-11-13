@@ -10,6 +10,8 @@ import NoteOutlinedIcon from "@mui/icons-material/NoteOutlined";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 
+import { useSidebar } from "@/context/SidebarContext";
+
 const MENU_ICON_URL = "/assets/starfish.png";
 const MAIN_BG_URL = "/assets/files5.png";
 
@@ -45,11 +47,7 @@ const mockData = {
 };
 
 function Files() {
-  const [isSidebarOpen, setSidebarOpen] = useState(false);
-
-  const toggleSidebar = () => {
-    setSidebarOpen(!isSidebarOpen);
-  };
+  const { toggleSidebar } = useSidebar();
 
   const handleOpen = () => {
     console.log("Icon clicked!");
@@ -99,11 +97,10 @@ function Files() {
             border: "1px solid rgba(255, 255, 255, 0.1)",
             transition: "transform 0.2s",
             "&:hover": { transform: "scale(1.1)" },
-            opacity: isSidebarOpen ? 0.8 : 1,
           }}
         />
 
-        <Sidebar open={isSidebarOpen} onClose={toggleSidebar} current="Files" />
+        {/* <Sidebar open={isSidebarOpen} onClose={toggleSidebar} current="Files" /> */}
 
         {/* Khu vực hiển thị file */}
         <Box
@@ -133,7 +130,7 @@ function Files() {
                 display: "inline-block",
 
                 // ✨ Hiệu ứng glass mờ nhẹ
-                background: "rgba(255, 255, 255, 0.3)",
+                background: "rgba(255, 255, 255, 0.5)",
                 backdropFilter: "blur(6px)",
                 WebkitBackdropFilter: "blur(6px)",
 
@@ -182,8 +179,8 @@ function Files() {
                         color: "black",
                         background: `linear-gradient(
                         135deg,
-                        rgba(255, 193, 7, 0.3),
-                        rgba(255, 152, 0, 0.3)
+                        rgba(255, 193, 7, 0.5),
+                        rgba(255, 152, 0, 0.5)
                       )`,
                         cursor: "pointer",
                       }}
@@ -226,7 +223,7 @@ function Files() {
                 display: "inline-block",
 
                 // // ✨ Hiệu ứng glass mờ nhẹ
-                background: "rgba(255, 255, 255, 0.3)",
+                background: "rgba(255, 255, 255, 0.5)",
                 backdropFilter: "blur(6px)",
                 WebkitBackdropFilter: "blur(6px)",
 
@@ -275,8 +272,8 @@ function Files() {
                         padding: 2,
                         color: "white",
                         background: doc.name.endsWith(".pdf")
-                          ? "linear-gradient(135deg, rgba(211,47,47,0.4), rgba(211,47,47,0.4))"
-                          : "linear-gradient(135deg, rgba(25,118,210,0.4), rgba(25,118,210,0.4))",
+                          ? "linear-gradient(135deg, rgba(211,47,47,0.5), rgba(211,47,47,0.5))"
+                          : "linear-gradient(135deg, rgba(25,118,210,0.5), rgba(25,118,210,0.5))",
                         "&:hover": {
                           background: doc.name.endsWith(".pdf")
                             ? "linear-gradient(135deg, rgba(211,47,47,0.5), rgba(211,47,47,0.5))"

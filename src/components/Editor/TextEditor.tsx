@@ -22,7 +22,13 @@ const TextEditor = () => {
     <Box
       sx={{
         // ...glassmorphismStyle,
-        background: 'linear-gradient(180deg, rgba(17,51,32,0.6), rgba(38,141,124,0.6), rgba(194,255,180,0.6))',
+        background: `linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.6),
+          rgba(255, 255, 255, 0.8),
+          rgba(245, 245, 245, 0.45)
+        )`,
+
         width: { xs: '90vw', md: '50vw' }, // Responsive
         height: '90vh',
         padding: '24px',
@@ -39,7 +45,7 @@ const TextEditor = () => {
         InputProps={{
           disableUnderline: true, // Bỏ gạch chân
           sx: {
-            color: 'white', // Màu chữ
+            color: 'black', // Màu chữ
             height: '100%',
             alignItems: 'flex-start', // Bắt đầu gõ từ trên xuống
             overflowY: 'auto',
@@ -51,7 +57,7 @@ const TextEditor = () => {
             height: '100%',
           },
           '& .MuiInputBase-input::placeholder': {
-            color: 'rgba(255, 255, 255, 0.7)', // Màu placeholder
+            color: 'black', // Màu placeholder
             opacity: 1,
           },
 

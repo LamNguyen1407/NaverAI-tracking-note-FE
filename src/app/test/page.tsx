@@ -76,27 +76,46 @@ export default function ParallaxThreePage() {
     }}
   >
     <div className="relative">
-      <img
-        src={ship}
-        alt="ship"
-        className="w-[600px] h-auto object-cover"
-      />
-      <span
-        className="absolute text-5xl font-extrabold"
-        style={{
-          left: "58%",
-          bottom: "35%",
-          transform: "translateX(-50%)",
-          color: "#E84AFF",
-          textShadow:
-            "0 0 8px #FF99FF, 0 0 15px #E84AFF, 0 0 25px rgba(255,255,255,0.8)",
-          cursor: "pointer",
-        }}
-        onClick={handleLogin}
-      >
-        START
-      </span>
-    </div>
+  <img
+    src={ship}
+    alt="ship"
+    className="w-[600px] h-auto object-cover"
+  />
+
+  {/* Text START */}
+  <span
+    className="absolute text-5xl font-extrabold"
+    style={{
+      left: "58%",
+      bottom: "35%",
+      transform: "translateX(-50%)",
+      color: "#E84AFF",
+      textShadow:
+        "0 0 8px #FF99FF, 0 0 15px #E84AFF, 0 0 25px rgba(255,255,255,0.8)",
+      pointerEvents: "none", // để text không ảnh hưởng click
+    }}
+  >
+    START
+  </span>
+
+  {/* Invisible Button */}
+  <button
+    onClick={handleLogin}
+    className="absolute"
+    style={{
+      left: "58%",
+      bottom: "35%",
+      transform: "translateX(-50%)",
+      width: "180px",
+      height: "50px",
+      background: "transparent",
+      border: "3px solid #E84AFF",   // chỉ shape viền
+      borderRadius: "12px",
+      cursor: "pointer",
+    }}
+  />
+</div>
+
   </div>
 </div>
 
@@ -108,43 +127,22 @@ export default function ParallaxThreePage() {
           dragMomentum={false}
           dragElastic={0.2}
           whileTap={{ cursor: "grabbing" }}
-          initial={{ x: -1000, y: '-50%' }}
-          animate={showCard 
-            ? { 
-                x: '70%', 
-                y: '-70%',
-                transition: { duration: 4, ease: 'easeInOut' }
-              } 
-            : {}
-          }
-          whileInView={{
-            borderRadius: [
-              '70% 30% 80% 20% / 60% 40% 70% 30%',
-              '35% 65% 25% 75% / 65% 35% 75% 25%',
-              '80% 20% 60% 40% / 55% 75% 25% 45%',
-              '60% 40% 70% 30% / 50% 60% 40% 50%'
-            ],
-            scale: [0.96, 1.06, 1],
-            transition: {
-              duration: 7,
-              ease: 'easeInOut',
-              repeat: Infinity,
-              repeatType: 'mirror'
-            }
-          }}
+          initial={{ x: 1000, y: '-50%'}}
+          animate={showCard ? { x: '85%', y: '-75%' } : {}}
+          transition={{ duration: 2, ease: 'easeInOut' }}
           style={{
             position: "absolute",
             top: "50%",
             left: "50%",
+            transform: "translate(-50%, -50%)",
             cursor: "grab",
             zIndex: 10,
-            overflow: "hidden", 
           }}
         >
           <GlassCard blurAmount={0} cornerRadius={100} shadowMode={false}>
-            <div className="h-80 w-80 relative"> 
+            <div className="h-60 w-60 relative"> 
               <img
-                src="/assets/rainbow3.png"
+                src="/assets/rainbow4.png"
                 alt="Bubble"
                 className="object-cover w-full h-full"
                 draggable={false} 
@@ -159,12 +157,12 @@ export default function ParallaxThreePage() {
           dragMomentum={false}
           dragElastic={0.2}
           whileTap={{ cursor: "grabbing" }}
-          initial={{ x: '-30%', y: -1000 }}
+          initial={{ x: '-60%', y: 1000 }}
           animate={showCard 
             ? { 
-                x: '-120%', 
-                y: '10%',
-                transition: { duration: 2, ease: 'easeInOut' }
+                x: '-150%', 
+                y: '30%',
+                transition: { duration: 3, ease: 'easeInOut' }
               } 
             : {}
           }
@@ -193,9 +191,9 @@ export default function ParallaxThreePage() {
           }}
         >
           <GlassCard blurAmount={0} cornerRadius={100} shadowMode={false}>
-            <div className="h-80 w-80 relative"> 
+            <div className="h-60 w-60 relative"> 
               <img
-                src="/assets/bubble3.png"
+                src="/assets/bubble4.png"
                 alt="Bubble"
                 className="object-cover w-full h-full"
                 draggable={false} 
@@ -210,43 +208,28 @@ export default function ParallaxThreePage() {
           dragMomentum={false}
           dragElastic={0.2}
           whileTap={{ cursor: "grabbing" }}
-          initial={{ x: 1000, y: 800 }}
+          initial={{ x: -1000, y: -800 }}
           animate={showCard 
             ? { 
-                x: '-170%', 
-                y: '-120%',
+                x: '-270%', 
+                y: '-200%',
                 transition: { duration: 4, ease: 'easeInOut' }
               } 
             : {}
           }
-          whileInView={{
-            borderRadius: [
-              '70% 30% 80% 20% / 60% 40% 70% 30%',
-              '35% 65% 25% 75% / 65% 35% 75% 25%',
-              '80% 20% 60% 40% / 55% 75% 25% 45%',
-              '60% 40% 70% 30% / 50% 60% 40% 50%'
-            ],
-            scale: [0.96, 1.06, 1],
-            transition: {
-              duration: 7,
-              ease: 'easeInOut',
-              repeat: Infinity,
-              repeatType: 'mirror'
-            }
-          }}
           style={{
             position: "absolute",
             top: "50%",
             left: "50%",
+            transform: "translate(-50%, -50%)",
             cursor: "grab",
             zIndex: 10,
-            overflow: "hidden", 
           }}
         >
           <GlassCard blurAmount={0} cornerRadius={100} shadowMode={false}>
-            <div className="h-80 w-80 relative"> 
+            <div className="h-40 w-40 relative"> 
               <img
-                src="/assets/sun.png"
+                src="/assets/sun3.png"
                 alt="Bubble"
                 className="object-cover w-full h-full"
                 draggable={false} 

@@ -80,7 +80,7 @@ function App() {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: 2, // khoảng cách giữa Toolbar và TextEditor
+          gap: 1, // khoảng cách giữa Toolbar và TextEditor
           width: '100%',
           height: '100vh',
         }}

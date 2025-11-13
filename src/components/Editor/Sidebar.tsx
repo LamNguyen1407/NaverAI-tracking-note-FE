@@ -1,102 +1,156 @@
-"use client"
+"use client";
 
-import React from 'react';
+import React, { useState } from "react";
 import {
   Drawer,
   Box,
   List,
   ListItem,
+  ListItemButton,
   ListItemText,
   Typography,
-} from '@mui/material';
+  Tabs,
+  Tab,
+} from "@mui/material";
 
-// URL của ảnh nền sidebar (giả sử đặt trong /public)
-const SIDEBAR_BG_URL = '/assets/jellyfish.png';
-const SIDEBAR_WIDTH = 280; // Độ rộng của sidebar
+import NoteOutlinedIcon from "@mui/icons-material/NoteOutlined";
+import FolderOutlinedIcon from "@mui/icons-material/FolderOutlined";
+import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
 
-// Style chung cho Glassmorphism của các mục trong Sidebar
+const SIDEBAR_BG_URL = "/assets/jellyfish.png";
+const SIDEBAR_WIDTH = 280;
+
 const glassmorphismStyle = {
-  backgroundColor: 'rgba(1, 62, 106, 0.6)', // Dùng màu #013e6a với 60% opacity
-  backdropFilter: 'blur(10px)',
-  border: '1px solid rgba(255, 255, 255, 0.18)',
-  borderRadius: '12px',
+  backgroundColor: "rgba(1, 62, 106, 0.6)",
+  backdropFilter: "blur(10px)",
+  border: "1px solid rgba(255, 255, 255, 0.18)",
+  borderRadius: "12px",
 };
 
-// Định nghĩa types cho props
 interface SidebarProps {
   open: boolean;
   onClose: () => void;
+  current?: string;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
+const mockData: Record<string, string[]> = {
+  Note: ["Ghi chú 1", "Ghi chú 2", "Ghi chú 3", "Ghi chú 4"],
+  Files: ["File A", "File B", "File C"],
+  Chat: ["Chat 1", "Chat 2"],
+};
+
+const Sidebar: React.FC<SidebarProps> = ({ open, onClose, current }) => {
+  const [tab, setTab] = useState(current || "Note");
+
   return (
-    // <GlassCard>
     <Drawer
       open={open}
       onClose={onClose}
-      variant="temporary" // "temporary" sẽ tự động đóng khi click ra ngoài
+      variant="temporary"
       PaperProps={{
         sx: {
           width: SIDEBAR_WIDTH,
-          borderRadius: '50px',
-          height: '97vh',
-          margin: '1.5vh auto',
-          marginLeft: '0.5vw',
-          
-          
-          // Sử dụng background đa lớp: Ảnh con sứa (trên) và Gradient (dưới)
+          borderRadius: "50px",
+          height: "97vh",
+          margin: "1.5vh auto",
+          marginLeft: "0.5vw",
           background: `
-            url(${SIDEBAR_BG_URL}), 
+            url(${SIDEBAR_BG_URL}),
             linear-gradient(
-              180deg, 
-              rgba(1, 62, 106, 0.6), 
-              rgba(67, 209, 255, 0.6), 
-              rgba(1, 62, 106, 0.6), 
-              rgba(65, 154, 214, 0.6), 
+              180deg,
+              rgba(1, 62, 106, 0.6),
+              rgba(67, 209, 255, 0.6),
+              rgba(1, 62, 106, 0.6),
+              rgba(65, 154, 214, 0.6),
               rgba(1, 24, 106, 0.6)
             )
           `,
-          backgroundSize: 'cover, cover',
-          backgroundPosition: 'center, center',
-          backgroundRepeat: 'no-repeat, no-repeat',
-
-          // Hiệu ứng Glassmorphism
-          backdropFilter: 'blur(15px)',
-          borderRight: '1px solid rgba(255, 255, 255, 0.2)',
-          boxSizing: 'border-box',
-          boxShadow: 'none',
+          backgroundSize: "cover, cover",
+          backgroundPosition: "center, center",
+          backgroundRepeat: "no-repeat, no-repeat",
+          backdropFilter: "blur(15px)",
+          borderRight: "1px solid rgba(255, 255, 255, 0.2)",
+          boxSizing: "border-box",
+          boxShadow: "none",
         },
       }}
     >
-      
-      <Box sx={{ padding: 2, overflow: 'auto' }}>
-        <Typography variant="h6" sx={{ color: 'white', mb: 2, textAlign: 'center' }}>
+      <Box sx={{ padding: 2, overflow: "auto" }}>
+        <Typography
+          variant="h6"
+          sx={{ color: "white", mb: 2, textAlign: "center" }}
+        >
           Menu
         </Typography>
+
+        {/* Tabs category */}
+        <Tabs
+          value={tab}
+          onChange={(e, v) => setTab(v)}
+          TabIndicatorProps={{ style: { backgroundColor: "black" } }}
+          sx={{
+            mb: 2,
+            ".MuiTab-root": {
+              color: "white",
+              fontWeight: 600,
+              transition: "0.25s ease",
+              borderRadius: "10px",
+              minHeight: "25px",
+              padding: "4px 0",
+              marginRight: "2px",
+              backgroundColor: "rgba(10, 35, 25, 0.6)",
+              minWidth: "81px",
+              fontSize: "10px",
+            },
+            ".MuiTab-root.Mui-selected": {
+              color: "black",
+              backgroundColor: "rgba(80, 200, 220, 0.55)",
+              backdropFilter: "blur(4px)",
+            },
+          }}
+        >
+          <Tab
+            icon={<NoteOutlinedIcon sx={{ fontSize: 20 }} />}
+            iconPosition="top"
+            label="Note"
+            value="Note"
+          />
+          <Tab
+            icon={<FolderOutlinedIcon sx={{ fontSize: 20 }} />}
+            iconPosition="top"
+            label="Files"
+            value="Files"
+          />
+          <Tab
+            icon={<ChatBubbleOutlineIcon sx={{ fontSize: 20 }} />}
+            iconPosition="top"
+            label="Chat"
+            value="Chat"
+          />
+        </Tabs>
+
+        {/* Nội dung thay đổi theo tab */}
         <List>
-          {/* Các mục menu giả lập theo ảnh */}
-          {[1, 2, 3, 4].map((item) => (
-            <ListItem
-              // button
-              key={item}
+          {mockData[tab].map((item, index) => (
+            <ListItemButton
+              key={index}
               sx={{
-                ...glassmorphismStyle, // Áp dụng glass cho từng mục
-                marginBottom: '10px',
-                '&:hover': {
-                  backgroundColor: 'rgba(67, 209, 255, 0.4)', // Hiệu ứng hover
+                ...glassmorphismStyle,
+                marginBottom: "10px",
+                "&:hover": {
+                  backgroundColor: "rgba(67, 209, 255, 0.4)",
+                },
+                "&:hover .MuiListItemText-primary": {
+                  color: "black", // đổi màu chữ khi hover
                 },
               }}
             >
-              <ListItemText
-                primary={`Ghi chú ${item}`}
-                sx={{ color: 'white' }}
-              />
-            </ListItem>
+              <ListItemText primary={item} sx={{ color: "white" }} />
+            </ListItemButton>
           ))}
         </List>
       </Box>
     </Drawer>
-
   );
 };
 

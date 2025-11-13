@@ -9,14 +9,21 @@ export default function HomePage() {
   return (
     <div className="relative w-full h-screen overflow-hidden">
       {/* Video background */}
-      <video
+      {/* <video
         className="absolute top-0 left-0 w-full h-full object-cover"
         src="/assets/wave2.mp4" // đặt video trong public/videos
         autoPlay
         loop
         muted
         playsInline
+      /> */}
+      <img
+        src="/assets/login4.png"
+        className="absolute top-0 left-0 w-full h-full object-cover"
+        alt="background"
       />
+
+
 
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-8 z-10">
 

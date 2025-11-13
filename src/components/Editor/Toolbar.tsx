@@ -9,8 +9,8 @@ const Toolbar = () => {
     <GlassCard>
     <Box
       sx={{
-        width: { xs: '150px', sm: '500px' }, // Responsive
-        height: '40px',
+        width: { xs: '150px', sm: '600px' }, // Responsive
+        height: '45px',
 
         // background: 'linear-gradient(90deg, rgba(205,255,216), rgba(148,185,255))',
         background: 'linear-gradient(45deg, rgb(255, 67, 83, 0.7), rgb(255, 210, 148, 0.7))',

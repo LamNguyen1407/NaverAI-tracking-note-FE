@@ -124,7 +124,7 @@ function Chat() {
                 }}
               >
                 <ChatBubble message="Xin chào! Tôi có thể giúp gì cho bạn?" />
-                <ChatBubble message="Cho tôi xem giao diện chat nhé." isUser />
+                {/* <ChatBubble message="Cho tôi xem giao diện chat nhé." isUser />
                 <ChatBubble message="Xin chào! Tôi có thể giúp gì cho bạn?" />
                 <ChatBubble message="Cho tôi xem giao diện chat nhé." isUser />
                 <ChatBubble message="Xin chào! Tôi có thể giúp gì cho bạn?" />
@@ -132,7 +132,7 @@ function Chat() {
                 <ChatBubble message="Cho tôi xem giao diện chat nhé." isUser />
                 <ChatBubble message="Xin chào! Tôi có thể giúp gì cho bạn?" />
                 <ChatBubble message="Cho tôi xem giao diện chat nhé." isUser />
-                <ChatBubble message="Xin chào! Tôi có thể giúp gì cho bạn?" />
+                <ChatBubble message="Xin chào! Tôi có thể giúp gì cho bạn?" /> */}
               </Box>
               {/* </GlassCard> */}
             </LiquidGlassWrapper>

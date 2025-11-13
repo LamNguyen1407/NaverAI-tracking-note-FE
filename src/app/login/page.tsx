@@ -35,7 +35,7 @@ export default function HomePage() {
               Welcome Back
             </h3>
 
-            <div className="text-lg text-white/90 leading-snug drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)] max-w-[480px] text-center">
+            <div className="text-lg text-[white] leading-snug drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)] max-w-[480px] text-center">
               <p>YOUR NOTES. YOUR KNOWLEDGE.</p>
               <p>SMARTER WITH AI</p>
             </div>
@@ -44,16 +44,16 @@ export default function HomePage() {
               <input
                 type="text"
                 placeholder="Username"
-                className="w-full py-3 px-5 rounded-full bg-white/20 text-white placeholder-white/60 outline-none focus:bg-white/30 transition"
+                className="w-full py-3 px-5 rounded-full bg-white/20 text-black placeholder-black/60 outline-none focus:bg-white/30 transition"
               />
               <input
                 type="password"
                 placeholder="Password"
-                className="w-full py-3 px-5 rounded-full bg-white/20 text-white placeholder-white/60 outline-none focus:bg-white/30 transition"
+                className="w-full py-3 px-5 rounded-full bg-white/20 text-black placeholder-black/60 outline-none focus:bg-white/30 transition"
               />
               <button
                 onClick={handleLogin}
-                className="cursor-pointer py-3 mt-2 w-full bg-orange-700 border border-orange-700 text-white rounded-full hover:bg-orange-600 transition"
+                className="cursor-pointer py-3 mt-2 w-full bg-[#7a4900] border border-orange-700 text-white rounded-full hover:bg-orange-600 transition"
               >
                 Login
               </button>
@@ -61,7 +61,7 @@ export default function HomePage() {
 
             <p className="text-sm text-white/70 mt-6">
               Don’t have an account?{" "}
-              <a href="#" className="text-orange-400 hover:underline">
+              <a href="#" className="text-[#fff9c7] hover:underline">
                 Create one now
               </a>
             </p>

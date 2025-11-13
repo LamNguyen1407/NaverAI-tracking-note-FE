@@ -13,6 +13,7 @@ import {
   Tab,
 } from "@mui/material";
 import { useRouter, usePathname } from "next/navigation";
+import LogoutIcon from "@mui/icons-material/Logout";
 
 import NoteOutlinedIcon from "@mui/icons-material/NoteOutlined";
 import FolderOutlinedIcon from "@mui/icons-material/FolderOutlined";
@@ -45,6 +46,11 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, current }) => {
 
   const router = useRouter();
   const pathname = usePathname();
+
+  const handleLogout = () => {
+    router.push("/login");
+  };
+
   return (
     <Drawer
       open={open}
@@ -164,6 +170,33 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, current }) => {
             </ListItemButton>
           ))}
         </List>
+      </Box>
+
+      <Box
+        sx={{
+          position: "absolute",
+          bottom: 20,
+          left: 20,
+          right: 20,
+          padding: "10px 16px",
+          borderRadius: "14px",
+          background: "rgba(255,255,255,0.18)",
+          backdropFilter: "blur(12px)",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 1.2,
+          color: "white",
+          fontWeight: 600,
+          "&:hover": {
+            background: "rgba(255,255,255,0.28)",
+          },
+        }}
+        onClick={handleLogout}
+      >
+        <LogoutIcon sx={{ fontSize: 20 }} />
+        Đăng xuất
       </Box>
     </Drawer>
   );

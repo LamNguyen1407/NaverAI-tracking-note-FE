@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Box, CssBaseline } from "@mui/material";
 import Sidebar from "@/components/Editor/Sidebar";
 import Grid from "@mui/material/Grid";
@@ -11,6 +11,10 @@ import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 
 import { useSidebar } from "@/context/SidebarContext";
+
+import { Dialog, DialogTitle, DialogContent } from "@mui/material";
+import ReactMarkdown from "react-markdown";
+import { renderAsync } from "docx-preview";
 
 const MENU_ICON_URL = "/assets/starfish.png";
 const MAIN_BG_URL = "/assets/files5.png";
@@ -46,12 +50,65 @@ const mockData = {
   ],
 };
 
+function MarkdownPreview({ blob }: { blob: Blob }) {
+  const [text, setText] = useState("");
+
+  useEffect(() => {
+    blob.text().then(setText);
+  }, [blob]);
+
+  return <ReactMarkdown>{text}</ReactMarkdown>;
+}
+
 function Files() {
   const { toggleSidebar } = useSidebar();
 
-  const handleOpen = () => {
-    console.log("Icon clicked!");
+  // const handleOpen = async (file: any) => {
+  //   setSelectedFile(file);
+
+  //   const res = await fetch(`/api/files/${file.id}`);
+  //   const blob = await res.blob();
+
+  //   setFileBlob(blob);
+  //   setOpenDialog(true);
+  // };
+  const handleOpen = async (file: any) => {
+    setSelectedFile(file);
+
+    // MOCK: tự map id → file path
+    const mockMap: Record<number, string> = {
+      1: "/mock-files/Javascript.pdf",
+      2: "/mock-files/NAVER.docx",
+      3: "/mock-files/DSA.md",
+    };
+
+    const url = mockMap[file.id];
+    if (!url) return alert("Không có mock file cho ID này");
+
+    const res = await fetch(url);
+    const blob = await res.blob();
+
+    setFileBlob(blob);
+    setOpenDialog(true);
   };
+
+  const handleClose = () => {
+    setOpenDialog(false);
+  };
+
+  const [openDialog, setOpenDialog] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<any>(null);
+  const [fileBlob, setFileBlob] = useState<Blob | null>(null);
+
+  useEffect(() => {
+    if (openDialog && fileBlob && selectedFile?.name.endsWith(".docx")) {
+      const container = document.getElementById("docx-container");
+      if (!container) return;
+
+      container.innerHTML = "";
+      renderAsync(fileBlob, container as HTMLElement);
+    }
+  }, [openDialog, fileBlob]);
 
   return (
     <Box
@@ -170,7 +227,7 @@ function Files() {
                         hover:shadow-[0_6px_28px_rgba(0,0,0,0.35)]
                         hover:-translate-y-1
                       "
-                      onClick={handleOpen}
+                      onClick={() => handleOpen(note)}
                       sx={{
                         display: "flex",
                         alignItems: "center",
@@ -263,7 +320,7 @@ function Files() {
                       hover:shadow-[0_6px_28px_rgba(0,0,0,0.35)]
                       hover:-translate-y-1
                     "
-                      onClick={handleOpen}
+                      onClick={() => handleOpen(doc)}
                       sx={{
                         cursor: "pointer",
                         display: "flex",
@@ -306,6 +363,43 @@ function Files() {
           </Box>
         </Box>
       </Box>
+      <Dialog open={openDialog} onClose={handleClose} maxWidth="md" fullWidth>
+        <DialogTitle>{selectedFile?.title || selectedFile?.name}</DialogTitle>
+
+        <DialogContent
+          sx={{
+            overflowY: "hidden", // ✨ chặn scroll dọc
+            padding: 0, // (optional) bỏ padding để iframe/docx fullscreen đẹp hơn
+          }}
+        >
+          {/* Markdown */}
+          {selectedFile?.content && fileBlob && (
+            <MarkdownPreview blob={fileBlob} />
+          )}
+
+          {/* PDF */}
+          {String(selectedFile?.name || "")
+            .toLowerCase()
+            .endsWith(".pdf") &&
+            fileBlob && (
+              <iframe
+                src={URL.createObjectURL(fileBlob)}
+                style={{ width: "100%", height: "80vh", border: "none" }}
+              />
+            )}
+
+          {/* DOCX */}
+          {String(selectedFile?.name || "")
+            .toLowerCase()
+            .endsWith(".docx") &&
+            fileBlob && (
+              <div
+                id="docx-container"
+                style={{ height: "80vh", overflow: "auto" }}
+              />
+            )}
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 }

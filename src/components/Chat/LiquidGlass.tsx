@@ -24,22 +24,21 @@ export default function LiquidGlassWrapper({
     borderRadius,
     overflow: "hidden",
 
-    // ⭐ Gần như trong suốt hoàn toàn
-    background: "rgba(255, 255, 255, 0.05)",
+    /* ⭐ gần như trong hoàn toàn */
+    background: "rgba(255, 255, 255, 0.015)",
 
-    // ⭐ Hiệu ứng glass blur
-    backdropFilter: `blur(${blur}px) saturate(180%)`,
-    WebkitBackdropFilter: `blur(${blur}px) saturate(180%)`,
+    /* ⭐ blur rất nhẹ → giữ nền rõ nhưng vẫn có glass */
+    backdropFilter: `blur(${blur}px) saturate(160%)`,
+    WebkitBackdropFilter: `blur(${blur}px) saturate(160%)`,
 
-    // ⭐ Viền glass nhẹ
-    border: border ? "1px solid rgba(255, 255, 255, 0.4)" : "none",
+    /* ⭐ Viền glass nhẹ — KHÔNG sáng */
+    border: "1px solid rgba(255, 255, 255, 0.18)",
 
-    // ⭐ Hiệu ứng reflection nhẹ
+    /* ⭐ Depth: tạo cảm giác “liquid” nhưng không chói */
     boxShadow: `
-      inset 0 0 0.6px rgba(255, 255, 255, 0.5),
-      inset 0 0 20px rgba(255, 255, 255, 0.2),
-      0 4px 20px rgba(0,0,0,0.15)
-    `,
+    inset 0 0 8px rgba(255, 255, 255, 0.1),
+    0 4px 16px rgba(0, 0, 0, 0.12)
+  `,
 
     ...style,
   };

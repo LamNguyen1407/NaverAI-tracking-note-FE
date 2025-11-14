@@ -78,7 +78,7 @@ function App() {
           height: "100vh",
         }}
       >
-        <Toolbar />
+        {/* <Toolbar /> */}
         <TextEditor />
       </Box>
     </Box>

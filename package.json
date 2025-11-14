@@ -18,6 +18,7 @@
     "@developer-hub/liquid-glass": "^1.2.3",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
+    "@mdxeditor/editor": "^3.48.0",
     "@mui/icons-material": "^7.3.5",
     "@mui/material": "^7.3.5",
     "@tiptap/react": "^3.10.7",
@@ -40,6 +41,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@tailwindcss/typography": "^0.5.19",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

@@ -9,11 +9,21 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@codemirror/commands": "^6.10.0",
+    "@codemirror/lang-markdown": "^6.5.0",
+    "@codemirror/state": "^6.5.2",
+    "@codemirror/theme-one-dark": "^6.1.3",
+    "@codemirror/view": "^6.38.6",
+    "@ddietr/codemirror-themes": "^1.5.2",
     "@developer-hub/liquid-glass": "^1.2.3",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.3.5",
     "@mui/material": "^7.3.5",
+    "@tiptap/react": "^3.10.7",
+    "@tiptap/starter-kit": "^3.10.7",
+    "@uiw/react-markdown-preview": "^5.1.5",
+    "@uiw/react-md-editor": "^4.0.8",
     "docx-preview": "^0.3.7",
     "framer-motion": "^12.23.24",
     "liquid-glass-react": "^1.1.1",
@@ -25,7 +35,8 @@
     "react-markdown": "^10.1.0",
     "react-scroll-parallax": "^3.5.0",
     "rehype-highlight": "^7.0.2",
-    "remark-gfm": "^4.0.1"
+    "remark-gfm": "^4.0.1",
+    "tiptap-markdown": "^0.9.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

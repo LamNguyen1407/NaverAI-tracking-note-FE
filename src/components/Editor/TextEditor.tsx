@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import React from 'react';
-import { Box, TextField } from '@mui/material';
-import { GlassCard } from '@developer-hub/liquid-glass';
+import React from "react";
+import { Box, TextField } from "@mui/material";
+import { GlassCard } from "@developer-hub/liquid-glass";
 
 // // Style chung cho Glassmorphism
 // const glassmorphismStyle = {
@@ -19,68 +19,82 @@ import { GlassCard } from '@developer-hub/liquid-glass';
 const TextEditor = () => {
   return (
     <GlassCard cornerRadius={50}>
-    <Box
-      sx={{
-        // ...glassmorphismStyle,
-        background: `linear-gradient(
+      <Box
+        sx={{
+          // ...glassmorphismStyle,
+          background: `linear-gradient(
           180deg,
           rgba(255, 255, 255, 0.6),
           rgba(255, 255, 255, 0.8),
           rgba(245, 245, 245, 0.45)
         )`,
 
-        width: { xs: '90vw', md: '50vw' }, // Responsive
-        height: '90vh',
-        padding: '24px',
-        boxSizing: 'border-box',
-        display: 'flex', // Sử dụng flex để TextField lấp đầy
-        flexDirection: 'column',
-      }}
-    >
-      <TextField
-        multiline
-        fullWidth
-        variant="standard" // Bỏ viền input
-        placeholder="Bắt đầu ghi chú..."
-        InputProps={{
-          disableUnderline: true, // Bỏ gạch chân
-          sx: {
-            color: 'black', // Màu chữ
-            height: '100%',
-            alignItems: 'flex-start', // Bắt đầu gõ từ trên xuống
-            overflowY: 'auto',
-          },
+          width: { xs: "90vw", md: "50vw" }, // Responsive
+          height: "90vh",
+          padding: "24px",
+          boxSizing: "border-box",
+          display: "flex", // Sử dụng flex để TextField lấp đầy
+          flexDirection: "column",
         }}
-        sx={{
-          height: '100%', // TextField chiếm toàn bộ chiều cao của Box
-          '& .MuiInputBase-root': {
-            height: '100%',
-          },
-          '& .MuiInputBase-input::placeholder': {
-            color: 'black', // Màu placeholder
-            opacity: 1,
-          },
+      >
+        <Box
+          sx={{
+            position: "relative",
+            height: "100%",
+            width: "100%",
+            bgcolor: "white",
+            p: 2,
+            borderRadius: 2,
+            overflow: "hidden",
+            fontFamily: "Inter, sans-serif",
+          }}
+        >
+          {/* Lớp Markdown highlight */}
+          <Box
+            sx={{
+              position: "absolute",
+              inset: 0,
+              p: 2,
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-word",
+              color: "black",
+              pointerEvents: "none", // Không cho click
+              overflowY: "auto",
+            }}
+          >
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeHighlight]}
+            >
+              {value || "Bắt đầu ghi chú..."}
+            </ReactMarkdown>
+          </Box>
 
-          '&::-webkit-scrollbar': {
-            width: '6px',
-          },
-          '&::-webkit-scrollbar-thumb': {
-            background: 'rgba(0,0,0,0.5)',
-            borderRadius: '3px',
-          },
-          '&::-webkit-scrollbar-thumb:hover': {
-            background: 'rgba(0,0,0,0.8)',
-          },
-          '&::-webkit-scrollbar-track': {
-            background: 'transparent',
-          },
-          scrollbarWidth: 'thin', // Firefox
-          scrollbarColor: 'rgba(0,0,0,0.5) transparent',
-
-        }}
-        
-      />
-    </Box>
+          {/* Lớp textarea gõ chữ */}
+          <textarea
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            style={{
+              position: "absolute",
+              inset: 0,
+              padding: "16px",
+              width: "100%",
+              height: "100%",
+              resize: "none",
+              border: "none",
+              outline: "none",
+              background: "transparent",
+              color: "transparent", // chữ trong suốt
+              caretColor: "black", // chỉ hiện con trỏ
+              fontFamily: "Inter, sans-serif",
+              fontSize: "16px",
+              lineHeight: "1.5",
+              overflowY: "auto",
+              whiteSpace: "pre-wrap",
+            }}
+          />
+        </Box>
+      </Box>
     </GlassCard>
   );
 };

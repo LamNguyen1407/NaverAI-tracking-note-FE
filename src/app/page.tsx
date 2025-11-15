@@ -8,7 +8,7 @@ import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 
 // Ảnh nền trong thư mục /public/assets/
-const bg1 = "/assets/hero_section3.png";
+const bg1 = "/assets/hero_section4.png";
 const ship = "/assets/ship.png";
 
 export default function ParallaxThreePage() {
@@ -32,8 +32,16 @@ export default function ParallaxThreePage() {
             mixBlendMode: "screen",
           }}
         />
+        {/* <video
+          className="absolute top-0 left-0 w-full h-full object-cover"
+          src="/assets/wave2.mp4" // đặt video trong public/videos
+          autoPlay
+          loop
+          muted
+          playsInline
+        /> */}
 
-        <div className="relative w-full h-full select-none">
+        <div className="relative w-[70%] h-full select-none">
           {/* NAVER */}
           <h1
             className="absolute font-serif leading-none"
@@ -42,8 +50,9 @@ export default function ParallaxThreePage() {
               left: "8%",
               fontSize: "9rem",
               fontWeight: 800,
-              color: "#123C6A",
+              color: "#FF8A3D",
               lineHeight: 1,
+              fontFamily: "var(--font-wkwk), sans-serif",
             }}
           >
             NAVER
@@ -57,14 +66,15 @@ export default function ParallaxThreePage() {
               right: "10%",
               fontSize: "11rem",
               fontWeight: 900,
-              color: "#FFD53D",
+              color: "#FFC107",
               letterSpacing: "-6px",
               lineHeight: 1,
               // transform: "rotate(-4deg)",
               textShadow: "3px 3px 10px rgba(0,0,0,0.25)",
+              fontFamily: "var(--font-super-maples), sans-serif",
             }}
           >
-            NOTE
+            ReWrySe
           </h1>
 
           {/* Con thuyền */}
@@ -89,9 +99,9 @@ export default function ParallaxThreePage() {
                   left: "58%",
                   bottom: "35%",
                   transform: "translateX(-50%)",
-                  color: "#E84AFF",
+                  color: "black",
                   textShadow:
-                    "0 0 8px #FF99FF, 0 0 15px #E84AFF, 0 0 25px rgba(255,255,255,0.8)",
+                    "0 0 8px #FF99FF, 0 0 15px #1ABC9C, 0 0 25px rgba(255,255,255,0.8)",
                   pointerEvents: "none", // để text không ảnh hưởng click
                 }}
               >
@@ -109,7 +119,7 @@ export default function ParallaxThreePage() {
                   width: "180px",
                   height: "50px",
                   background: "transparent",
-                  border: "3px solid #E84AFF", // chỉ shape viền
+                  border: "3px solid #FFB38A", // chỉ shape viền
                   borderRadius: "12px",
                   cursor: "pointer",
                 }}
@@ -138,12 +148,12 @@ export default function ParallaxThreePage() {
         >
           <GlassCard blurAmount={0} cornerRadius={100} shadowMode={false}>
             <div className="h-60 w-60 relative">
-              {/* <img
-                src="/assets/rainbow3.png"
+              <img
+                src="/assets/bubble2.png"
                 alt="Bubble"
                 className="object-cover w-full h-full"
-                draggable={false} 
-              /> */}
+                draggable={false}
+              />
             </div>
           </GlassCard>
         </motion.div>
@@ -190,12 +200,12 @@ export default function ParallaxThreePage() {
         >
           <GlassCard blurAmount={0} cornerRadius={100} shadowMode={false}>
             <div className="h-60 w-60 relative">
-              <img
+              {/* <img
                 src="/assets/bubble2.png"
                 alt="Bubble"
                 className="object-cover w-full h-full"
                 draggable={false}
-              />
+              /> */}
             </div>
           </GlassCard>
         </motion.div>

@@ -18,6 +18,7 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import NoteOutlinedIcon from "@mui/icons-material/NoteOutlined";
 import FolderOutlinedIcon from "@mui/icons-material/FolderOutlined";
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
+import { GlassCard } from "@developer-hub/liquid-glass";
 
 const SIDEBAR_BG_URL = "/assets/jellyfish.png";
 const SIDEBAR_WIDTH = 280;
@@ -64,140 +65,159 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, current }) => {
           margin: "1.5vh auto",
           marginLeft: "0.5vw",
           background: `
-            url(${SIDEBAR_BG_URL}),
-            linear-gradient(
-              180deg,
-              rgba(1, 62, 106, 0.6),
-              rgba(67, 209, 255, 0.6),
-              rgba(1, 62, 106, 0.6),
-              rgba(65, 154, 214, 0.6),
-              rgba(1, 24, 106, 0.6)
-            )
+            // url(${SIDEBAR_BG_URL}),
+            transparent
           `,
           backgroundSize: "cover, cover",
           backgroundPosition: "center, center",
           backgroundRepeat: "no-repeat, no-repeat",
-          backdropFilter: "blur(15px)",
+          // backdropFilter: "blur(15px)",
           borderRight: "1px solid rgba(255, 255, 255, 0.2)",
           boxSizing: "border-box",
           boxShadow: "none",
+          overflow: "hidden",
         },
       }}
     >
-      <Box sx={{ padding: 2, overflow: "auto" }}>
-        <Typography
-          variant="h6"
-          sx={{ color: "white", mb: 2, textAlign: "center" }}
-        >
-          Menu
-        </Typography>
-
-        {/* Tabs category */}
-        <Tabs
-          value={tab}
-          onChange={(e, v) => {
-            setTab(v);
-
-            const target =
-              v === "Note"
-                ? "/content/editor"
-                : v === "Files"
-                ? "/content/files"
-                : "/content/chat";
-
-            // ⚡ Check nếu đang ở trang đó rồi thì không chuyển
-            if (pathname !== target) router.push(target as any);
-          }}
-          TabIndicatorProps={{ style: { backgroundColor: "black" } }}
+      <GlassCard>
+        <Box
           sx={{
-            mb: 2,
-            ".MuiTab-root": {
-              color: "white",
-              fontWeight: 600,
-              transition: "0.25s ease",
-              borderRadius: "10px",
-              minHeight: "25px",
-              padding: "4px 0",
-              marginRight: "2px",
-              backgroundColor: "rgba(10, 35, 25, 0.6)",
-              minWidth: "81px",
-              fontSize: "10px",
-            },
-            ".MuiTab-root.Mui-selected": {
-              color: "black",
-              backgroundColor: "rgba(80, 200, 220, 0.55)",
-              backdropFilter: "blur(4px)",
-            },
+            width: SIDEBAR_WIDTH,
+            borderRadius: "50px",
+            height: "97vh",
+
+            // margin: "1.5vh auto",
+            // marginLeft: "0.5vw",
+
+            // boxSizing: "border-box",
+            // boxShadow: "none",
+            background: `
+              url(${SIDEBAR_BG_URL}),
+              transparent
+            `,
+            backgroundSize: "cover, cover",
+            backgroundPosition: "center, center",
+            backgroundRepeat: "no-repeat, no-repeat",
+
+            overflow: "hiddent",
           }}
         >
-          <Tab
-            icon={<NoteOutlinedIcon sx={{ fontSize: 20 }} />}
-            iconPosition="top"
-            label="Note"
-            value="Note"
-          />
-          <Tab
-            icon={<FolderOutlinedIcon sx={{ fontSize: 20 }} />}
-            iconPosition="top"
-            label="Files"
-            value="Files"
-          />
-          <Tab
-            icon={<ChatBubbleOutlineIcon sx={{ fontSize: 20 }} />}
-            iconPosition="top"
-            label="Chat"
-            value="Chat"
-          />
-        </Tabs>
+          <Box sx={{ padding: 2, overflow: "auto" }}>
+            <Typography
+              variant="h6"
+              sx={{ color: "white", mb: 2, textAlign: "center" }}
+            >
+              Menu
+            </Typography>
 
-        {/* Nội dung thay đổi theo tab */}
-        <List>
-          {mockData[tab].map((item, index) => (
-            <ListItemButton
-              key={index}
+            {/* Tabs category */}
+            <Tabs
+              value={tab}
+              onChange={(e, v) => {
+                setTab(v);
+
+                const target =
+                  v === "Note"
+                    ? "/content/editor"
+                    : v === "Files"
+                    ? "/content/files"
+                    : "/content/chat";
+
+                // ⚡ Check nếu đang ở trang đó rồi thì không chuyển
+                if (pathname !== target) router.push(target as any);
+              }}
+              TabIndicatorProps={{ style: { backgroundColor: "black" } }}
               sx={{
-                ...glassmorphismStyle,
-                marginBottom: "10px",
-                "&:hover": {
-                  backgroundColor: "rgba(67, 209, 255, 0.4)",
+                mb: 2,
+                ".MuiTab-root": {
+                  color: "white",
+                  fontWeight: 600,
+                  transition: "0.25s ease",
+                  borderRadius: "10px",
+                  minHeight: "25px",
+                  padding: "4px 0",
+                  marginRight: "2px",
+                  backgroundColor: "rgba(10, 35, 25, 0.6)",
+                  minWidth: "81px",
+                  fontSize: "10px",
                 },
-                "&:hover .MuiListItemText-primary": {
-                  color: "black", // đổi màu chữ khi hover
+                ".MuiTab-root.Mui-selected": {
+                  color: "black",
+                  backgroundColor: "rgba(80, 200, 220, 0.55)",
+                  backdropFilter: "blur(4px)",
                 },
               }}
             >
-              <ListItemText primary={item} sx={{ color: "white" }} />
-            </ListItemButton>
-          ))}
-        </List>
-      </Box>
+              <Tab
+                icon={<NoteOutlinedIcon sx={{ fontSize: 20 }} />}
+                iconPosition="top"
+                label="Note"
+                value="Note"
+              />
+              <Tab
+                icon={<FolderOutlinedIcon sx={{ fontSize: 20 }} />}
+                iconPosition="top"
+                label="Files"
+                value="Files"
+              />
+              <Tab
+                icon={<ChatBubbleOutlineIcon sx={{ fontSize: 20 }} />}
+                iconPosition="top"
+                label="Chat"
+                value="Chat"
+              />
+            </Tabs>
 
-      <Box
-        sx={{
-          position: "absolute",
-          bottom: 20,
-          left: 20,
-          right: 20,
-          padding: "10px 16px",
-          borderRadius: "14px",
-          background: "rgba(255,255,255,0.18)",
-          backdropFilter: "blur(12px)",
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 1.2,
-          color: "white",
-          fontWeight: 600,
-          "&:hover": {
-            background: "rgba(255,255,255,0.28)",
-          },
-        }}
-        onClick={handleLogout}
-      >
-        <LogoutIcon sx={{ fontSize: 20 }} />
-        Đăng xuất
-      </Box>
+            {/* Nội dung thay đổi theo tab */}
+            <List>
+              {mockData[tab].map((item, index) => (
+                <ListItemButton
+                  key={index}
+                  sx={{
+                    ...glassmorphismStyle,
+                    marginBottom: "10px",
+                    "&:hover": {
+                      backgroundColor: "rgba(67, 209, 255, 0.4)",
+                    },
+                    "&:hover .MuiListItemText-primary": {
+                      color: "black", // đổi màu chữ khi hover
+                    },
+                  }}
+                >
+                  <ListItemText primary={item} sx={{ color: "white" }} />
+                </ListItemButton>
+              ))}
+            </List>
+          </Box>
+
+          <Box
+            sx={{
+              position: "absolute",
+              bottom: 20,
+              left: 20,
+              right: 20,
+              padding: "10px 16px",
+              borderRadius: "14px",
+              background: "rgba(255,255,255,0.18)",
+              backdropFilter: "blur(12px)",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 1.2,
+              color: "white",
+              fontWeight: 600,
+              "&:hover": {
+                background: "rgba(255,255,255,0.28)",
+              },
+            }}
+            onClick={handleLogout}
+          >
+            <LogoutIcon sx={{ fontSize: 20 }} />
+            Đăng xuất
+          </Box>
+        </Box>
+      </GlassCard>
     </Drawer>
   );
 };

@@ -8,7 +8,7 @@ import Toolbar from "@/components/Editor/Toolbar";
 import TextEditor from "@/components/Editor/TextEditor";
 import { useSidebar } from "@/context/SidebarContext";
 // URL của ảnh nền chính (giả sử đặt trong /public)
-const MAIN_BG_URL = "/assets/sea7.png";
+const MAIN_BG_URL = "/assets/sea9.png";
 const MENU_ICON_URL = "/assets/starfish.png";
 
 function App() {
@@ -78,8 +78,8 @@ function App() {
           height: "100vh",
         }}
       >
-        {/* <Toolbar /> */}
         <TextEditor />
+        {/* <Toolbar /> */}
       </Box>
     </Box>
   );

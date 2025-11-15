@@ -101,13 +101,30 @@ const TextEditor = () => {
 
           borderRadius: "15px",
           border: "1px solid rgba(255,255,255,0.18)",
-          width: { xs: "90vw", md: "65vw" },
+          width: { xs: "90vw", md: "60vw" },
           height: "90vh",
 
           p: 2,
           overflow: "hidden",
           display: "flex",
           flexDirection: "column",
+
+          "&::-webkit-scrollbar": {
+            width: "6px",
+          },
+          "&::-webkit-scrollbar-thumb": {
+            background: "rgba(0,0,0,0.5)",
+            borderRadius: "3px",
+          },
+          "&::-webkit-scrollbar-thumb:hover": {
+            background: "rgba(0,0,0,0.8)",
+          },
+          "&::-webkit-scrollbar-track": {
+            background: "transparent",
+          },
+
+          scrollbarWidth: "thin", // Firefox
+          scrollbarColor: "rgba(0,0,0,0.5) transparent",
         }}
       >
         {/* ⭐ Wrapper bắt buộc để editor hoạt động đúng */}
@@ -157,6 +174,9 @@ const TextEditor = () => {
             // .mdxeditor-content {
             //   color: white !important;
             // }
+            .mdxeditor-content {
+              overflow-x: hidden !important;
+            }
 
             /* -------------------- HEADINGS -------------------- */
             .mdxeditor-content h1 {
@@ -237,6 +257,15 @@ const TextEditor = () => {
               padding-left: 1rem;
               color: black;
               margin: 1rem 0;
+            }
+
+            /* -------------------- TABLE -------------------- */
+
+            .mdxeditor-content th,
+            .mdxeditor-content td {
+              border: 1px solid black !important; /* đường kẻ màu đen */
+              padding: 8px 12px;
+              text-align: left;
             }
           `}</style>
         </div>

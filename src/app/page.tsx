@@ -30,8 +30,10 @@ export default function ParallaxThreePage() {
           style={{
             backgroundImage: `url(${bg1})`,
             mixBlendMode: "screen",
+            filter: "blur(3px)",
           }}
         />
+
         {/* <video
           className="absolute top-0 left-0 w-full h-full object-cover"
           src="/assets/wave2.mp4" // đặt video trong public/videos

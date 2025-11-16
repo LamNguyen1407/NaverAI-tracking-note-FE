@@ -1,13 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
 import { GlassCard } from "@developer-hub/liquid-glass";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { LoginInput, LoginSchema } from "@/type/user/LoginForm";
 import { toast } from "react-toastify";
+import { RegisterInput, RegisterSehema } from "@/type/user/RegisterForm";
 import Link from "next/link";
 
 
@@ -19,13 +17,13 @@ export default function HomePage() {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm({
-    resolver: zodResolver(LoginSchema),
+    resolver: zodResolver(RegisterSehema),
   });
 
-  const onSubmit = async (data: LoginInput) => {
+  const onSubmit = async (data: RegisterInput) => {
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API}/auth/login`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -33,18 +31,15 @@ export default function HomePage() {
 
       if (!res.ok) {
         const err = await res.json();
-        toast.error(err.detail || "Login failed");
+        toast.error(err.detail || "Register failed");
         return;
       }
 
       const result = await res.json();
 
-      toast.success("Login successful!");
+      toast.success(result.message || "Register successful!");
 
-      // store token
-      localStorage.setItem("access_token", result.session.access_token);
-
-      router.push("/content/editor");
+      router.push("/login");
     } catch (err) {
       toast.error("An unexpected error occurred. Please try again.");
     }
@@ -63,12 +58,29 @@ export default function HomePage() {
             onSubmit={handleSubmit(onSubmit)}
             className="flex flex-col items-center p-10 space-y-6 text-center w-[560px] max-w-[94vw]"
           >
-            <h3 className="text-4xl font-bold text-white">Welcome Back</h3>
+            <h3 className="text-4xl font-bold text-white">Start your journey</h3>
 
-            <div className="text-lg text-[white] leading-snug drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)] max-w-[480px] text-center">
-              <p>YOUR NOTES. YOUR KNOWLEDGE.</p>
-              <p>SMARTER WITH AI</p>
-            </div>
+            {/* Full Name */}
+            <input
+              type="text"
+              placeholder="Full Name"
+              {...register("full_name")}
+              className="w-full py-3 px-5 rounded-full bg-white/20 text-black outline-none"
+            />
+            {errors.full_name && (
+              <p className="text-red-500 text-sm font-bold">{errors.full_name.message}</p>
+            )}
+
+            {/* Phone Number */}
+            <input
+              type="text"
+              placeholder="Phone Number"
+              {...register("phone")}
+              className="w-full py-3 px-5 rounded-full bg-white/20 text-black outline-none"
+            />
+            {errors.phone && (
+              <p className="text-red-500 text-sm font-bold">{errors.phone.message}</p>
+            )}
 
             {/* Email */}
             <input
@@ -97,12 +109,12 @@ export default function HomePage() {
               disabled={isSubmitting}
               className="py-3 mt-2 w-full bg-[#7a4900] text-white rounded-full hover:bg-orange-600 transition disabled:opacity-50"
             >
-              {isSubmitting ? "Loading..." : "Login"}
+              {isSubmitting ? "Loading..." : "Register"}
             </button>
-             <p className="text-sm text-white/70 mt-6">
-              Don’t have an account?{" "}
-              <Link href="/register" className="text-[#fff9c7] hover:underline">
-                Create one now
+            <p className="text-sm text-white/70 mt-6">
+              Have an account?{" "}
+              <Link href="/login" className="text-[#fff9c7] hover:underline">
+                Login here
               </Link>
             </p>
           </form>

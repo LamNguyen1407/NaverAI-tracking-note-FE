@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import localFont from "next/font/local";
-import {ToastContainer} from "react-toastify"; 
-
+import { ToastContainer } from "react-toastify";
+import { ToastClient } from "@/components/Utils/ToastClient";
 
 const superMaples = localFont({
   src: "../../public/fonts/SuperMaples-2vR2w.ttf",
@@ -67,7 +67,9 @@ export default function RootLayout({
           antialiased`}
       >
         {children}
-        <ToastContainer position="top-right" />
+
+        {/* <ToastContainer position="top-right" /> */}
+        <ToastClient></ToastClient>
       </body>
     </html>
   );

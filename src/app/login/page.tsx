@@ -59,7 +59,7 @@ export default function HomePage() {
         <GlassCard blurAmount={0} cornerRadius={100} shadowMode={false}>
           <form
             onSubmit={handleSubmit(onSubmit)}
-            className="flex flex-col items-center p-6 space-y-4 text-center w-[560px] max-w-[94vw] h-120"
+            className="flex flex-col items-center p-6 px-15 space-y-4 text-center w-[560px] max-w-[94vw] h-120"
           >
             <h3 className="text-4xl font-bold text-white">Welcome Back</h3>
 
@@ -73,7 +73,11 @@ export default function HomePage() {
               type="text"
               placeholder="Email"
               {...register("email")}
-              className="w-full py-3 px-5 rounded-full bg-white/20 text-black outline-none"
+              className="w-full py-3 px-5 rounded-full bg-white/20 text-black outline-none
+              focus:bg-white/50
+              autofill:bg-white/50
+                scheme-dark
+              "
             />
             <div className="min-h-2">
               {errors.email && (

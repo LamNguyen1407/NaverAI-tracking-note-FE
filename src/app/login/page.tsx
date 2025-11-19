@@ -10,7 +10,6 @@ import { LoginInput, LoginSchema } from "@/type/user/LoginForm";
 import { toast } from "react-toastify";
 import Link from "next/link";
 
-
 export default function HomePage() {
   const router = useRouter();
 
@@ -23,7 +22,6 @@ export default function HomePage() {
   });
 
   const onSubmit = async (data: LoginInput) => {
-
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API}/auth/login`, {
         method: "POST",
@@ -61,7 +59,7 @@ export default function HomePage() {
         <GlassCard blurAmount={0} cornerRadius={100} shadowMode={false}>
           <form
             onSubmit={handleSubmit(onSubmit)}
-            className="flex flex-col items-center p-10 space-y-6 text-center w-[560px] max-w-[94vw]"
+            className="flex flex-col items-center p-6 space-y-4 text-center w-[560px] max-w-[94vw] h-120"
           >
             <h3 className="text-4xl font-bold text-white">Welcome Back</h3>
 
@@ -77,9 +75,13 @@ export default function HomePage() {
               {...register("email")}
               className="w-full py-3 px-5 rounded-full bg-white/20 text-black outline-none"
             />
-            {errors.email && (
-              <p className="text-red-500 text-sm font-bold">{errors.email.message}</p>
-            )}
+            <div className="min-h-2">
+              {errors.email && (
+                <p className="text-[#ffcc66] text-sm font-bold">
+                  {errors.email.message}
+                </p>
+              )}
+            </div>
 
             {/* Password */}
             <input
@@ -88,20 +90,24 @@ export default function HomePage() {
               {...register("password")}
               className="w-full py-3 px-5 rounded-full bg-white/20 text-black outline-none"
             />
-            {errors.password && (
-              <p className="text-red-500 text-sm font-bold">{errors.password.message}</p>
-            )}
+            <div className="min-h-2">
+              {errors.password && (
+                <p className="text-[#ffcc66] text-sm font-bold">
+                  {errors.password.message}
+                </p>
+              )}
+            </div>
 
             <button
               type="submit"
               disabled={isSubmitting}
-              className="py-3 mt-2 w-full bg-[#7a4900] text-white rounded-full hover:bg-orange-600 transition disabled:opacity-50"
+              className="py-3 mt-2 w-full bg-[#7a4900] text-white rounded-full hover:bg-orange-600 transition disabled:opacity-50 cursor-pointer"
             >
               {isSubmitting ? "Loading..." : "Login"}
             </button>
-             <p className="text-sm text-white/70 mt-6">
+            <p className="text-sm text-white/90 mt-6">
               Don’t have an account?{" "}
-              <Link href="/register" className="text-[#fff9c7] hover:underline">
+              <Link href="/register" className="text-black/80 hover:underline">
                 Create one now
               </Link>
             </p>

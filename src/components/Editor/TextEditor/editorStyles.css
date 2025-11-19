@@ -1,0 +1,114 @@
+/* -------------------------------------------------------------------------- */
+/* LOGIC HIGHLIGHT (MỚI)                           */
+/* -------------------------------------------------------------------------- */
+
+/* Logic: Cứ mỗi 10 block thì:
+   - 5 block đầu (1-5): Highlight đỏ nhạt (đang soạn/đã check)
+   - 5 block sau (6-10): Màu thường 
+*/
+.zebra-striping > *:nth-child(10n + 1),
+.zebra-striping > *:nth-child(10n + 2),
+.zebra-striping > *:nth-child(10n + 3),
+.zebra-striping > *:nth-child(10n + 4),
+.zebra-striping > *:nth-child(10n + 5) {
+  background-color: rgba(255, 0, 0, 0.08); /* Highlight đỏ nhẹ */
+  border-radius: 4px;
+  /* border-left: 3px solid rgba(255, 0, 0, 0.3);  Option: thêm viền trái nếu thích */
+}
+
+/* -------------------------------------------------------------------------- */
+/* STYLE CŨ CỦA BẠN (GIỮ NGUYÊN)                      */
+/* -------------------------------------------------------------------------- */
+
+.mdxeditor-content {
+  overflow-x: hidden !important;
+}
+
+/* -------------------- HEADINGS -------------------- */
+.mdxeditor-content h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 1.25rem 0 0.75rem;
+}
+.mdxeditor-content h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 1.1rem 0 0.5rem;
+}
+.mdxeditor-content h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 1rem 0 0.5rem;
+}
+.mdxeditor-content h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0.75rem 0 0.35rem;
+}
+.mdxeditor-content h5 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0.6rem 0 0.3rem;
+}
+.mdxeditor-content h6 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0.5rem 0 0.25rem;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+/* -------------------- PARAGRAPH -------------------- */
+.mdxeditor-content p {
+  margin: 0.5rem 0;
+  line-height: 1.7;
+}
+
+/* -------------------- LISTS (BULLET + NUMBERED) ---- */
+.mdxeditor-content ul {
+  list-style-type: disc !important;
+  padding-left: 1.5rem !important;
+  margin: 0.5rem 0 !important;
+}
+
+.mdxeditor-content ul ul {
+  list-style-type: circle !important;
+}
+
+.mdxeditor-content ul ul ul {
+  list-style-type: square !important;
+}
+
+.mdxeditor-content ol {
+  list-style-type: decimal !important;
+  padding-left: 1.5rem !important;
+  margin: 0.5rem 0 !important;
+}
+
+.mdxeditor-content ol ol {
+  list-style-type: lower-alpha !important;
+}
+
+.mdxeditor-content ol ol ol {
+  list-style-type: lower-roman !important;
+}
+
+.mdxeditor-content li {
+  margin: 0.25rem 0 !important;
+}
+
+/* -------------------- BLOCKQUOTE ------------------- */
+.mdxeditor-content blockquote {
+  border-left: 4px solid #475569;
+  padding-left: 1rem;
+  color: black;
+  margin: 1rem 0;
+}
+
+/* -------------------- TABLE -------------------- */
+.mdxeditor-content th,
+.mdxeditor-content td {
+  border: 1px solid black !important;
+  padding: 8px 12px;
+  text-align: left;
+}

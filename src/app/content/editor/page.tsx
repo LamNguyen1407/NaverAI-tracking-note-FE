@@ -5,7 +5,7 @@ import { Box, CssBaseline, IconButton } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import Sidebar from "@/components/Editor/Sidebar";
 import Toolbar from "@/components/Editor/Toolbar";
-import TextEditor from "@/components/Editor/TextEditor";
+import TextEditor from "@/components/Editor/TextEditor/TextEditor";
 import { useSidebar } from "@/context/SidebarContext";
 // URL của ảnh nền chính (giả sử đặt trong /public)
 const MAIN_BG_URL = "/assets/sea9.png";

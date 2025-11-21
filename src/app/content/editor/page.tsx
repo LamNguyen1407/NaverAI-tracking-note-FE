@@ -8,13 +8,20 @@ import Toolbar from "@/components/Editor/Toolbar";
 import TextEditor from "@/components/Editor/TextEditor/TextEditor";
 import { useSidebar } from "@/context/SidebarContext";
 import { useSearchParams } from "next/navigation";
+import { initialMarkdown } from "@/components/Editor/TextEditor/initialMarkdown";
 // URL của ảnh nền chính (giả sử đặt trong /public)
 const MAIN_BG_URL = "/assets/sea9.png";
 const MENU_ICON_URL = "/assets/starfish.png";
 
 function App() {
+  const [content, setContent] = useState(initialMarkdown)
   const { toggleSidebar } = useSidebar();
 
+  useEffect(() => {
+    setContent(initialMarkdown)
+  }, [])
+
+ 
   return (
     <Box
       sx={{
@@ -79,7 +86,7 @@ function App() {
           height: "100vh",
         }}
       >
-        {/* <TextEditor content={content} /> */}
+        <TextEditor content={content} />
         {/* <Toolbar /> */}
       </Box>
     </Box>

@@ -6,7 +6,7 @@ import "react-toastify/dist/ReactToastify.css";
 export function ToastClient() {
   return (
     <>
-      <ToastContainer position="top-left" />
+      <ToastContainer position="top-center" />
 
       {/* Toast CSS override — chạy được vì đây là client component */}
       <style jsx global>{`

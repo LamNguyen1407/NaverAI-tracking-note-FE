@@ -14,7 +14,7 @@ import NoteList from "@/components/File/NoteList";
 import { useFileStore } from "@/stores/fileStore";
 
 const MENU_ICON_URL = "/assets/starfish.png";
-const MAIN_BG_URL = "/assets/files5.png";
+const MAIN_BG_URL = "/assets/files4.png";
 
 // mockData để giả lập API
 // const mockData = {

@@ -11,12 +11,10 @@ import ReactMarkdown from "react-markdown";
 import { renderAsync } from "docx-preview";
 import DocumentList from "@/components/File/DocumentList";
 import NoteList from "@/components/File/NoteList";
+import { useFileStore } from "@/stores/fileStore";
 
 const MENU_ICON_URL = "/assets/starfish.png";
 const MAIN_BG_URL = "/assets/files5.png";
-
-//cached note , document data
-let cachedMetadata: { notes: any[]; docs: any[] } | null = null;
 
 // mockData để giả lập API
 // const mockData = {
@@ -59,10 +57,10 @@ function MarkdownPreview({ blob }: { blob: Blob }) {
   return (
     <div
       style={{
-        height: "80vh",         
-        overflowY: "auto",      
-        padding: "16px",        
-        background: "white",    
+        height: "80vh",
+        overflowY: "auto",
+        padding: "16px",
+        background: "white",
         borderRadius: "8px",
       }}
     >
@@ -74,6 +72,7 @@ function MarkdownPreview({ blob }: { blob: Blob }) {
 function Files() {
   const { toggleSidebar } = useSidebar();
 
+  const reloadFlag = useFileStore((state) => state.reloadFlag);
 
   // const handleOpen = async (file: any) => {
   //   setSelectedFile(file);
@@ -103,60 +102,51 @@ function Files() {
   const [notes, setNotes] = useState<any[]>([]);
   const [documents, setDocuments] = useState<any[]>([]);
 
+  useEffect(() => {
+    if (!openDialog || !fileBlob) return;
+    if (!selectedFile?.file_name?.endsWith(".docx")) return;
 
-useEffect(() => {
-  if (!openDialog || !fileBlob) return;
-  if (!selectedFile?.file_name?.endsWith(".docx")) return;
+    const renderDoc = async () => {
+      await new Promise((r) => setTimeout(r, 20)); // chờ dialog render container
 
-  const renderDoc = async () => {
-    await new Promise((r) => setTimeout(r, 20)); // chờ dialog render container
+      const container = document.getElementById("docx-container");
+      if (!container) return;
 
-    const container = document.getElementById("docx-container");
-    if (!container) return;
+      container.innerHTML = "";
 
-    container.innerHTML = "";
+      const buf = await fileBlob.arrayBuffer();
+      renderAsync(buf, container);
+    };
 
-    const buf = await fileBlob.arrayBuffer();
-    renderAsync(buf, container);
-  };
-
-  renderDoc();
-}, [openDialog]);
-
+    renderDoc();
+  }, [openDialog]);
 
   useEffect(() => {
-  const fetchFiles = async () => {
-    try {
-      // Kiểm tra cache trước
-      if (cachedMetadata) {
-        setNotes(cachedMetadata.notes);
-        setDocuments(cachedMetadata.docs);
-        return;
+    const fetchFiles = async () => {
+      try {
+        //lay note va document tu cached
+
+        // Lấy Note và Document
+        const [noteRes, docRes] = await Promise.all([
+          fetch(`${process.env.NEXT_PUBLIC_API}/files/metadata/note`),
+          fetch(`${process.env.NEXT_PUBLIC_API}/files/metadata/document`),
+        ]);
+
+        const [noteData, docData] = await Promise.all([
+          noteRes.json(),
+          docRes.json(),
+        ]);
+
+        // Cập nhật state
+        setNotes(noteData.files);
+        setDocuments(docData.files);
+      } catch (err) {
+        console.error("Failed to fetch files metadata", err);
       }
-      // Lấy Note và Document
-      const [noteRes, docRes] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_API}/files/metadata/note`),
-        fetch(`${process.env.NEXT_PUBLIC_API}/files/metadata/document`),
-      ]);
+    };
 
-      const [noteData, docData] = await Promise.all([
-        noteRes.json(),
-        docRes.json(),
-      ]);
-      // Lưu vào cache
-      cachedMetadata = { notes: noteData.files, docs: docData.files };
-
-      // Cập nhật state
-      setNotes(noteData.files);
-      setDocuments(docData.files);
-     
-    } catch (err) {
-      console.error("Failed to fetch files metadata", err);
-    }
-  };
-
-  fetchFiles();
-}, []);
+    fetchFiles();
+  }, [reloadFlag]);
 
   return (
     <Box
@@ -325,7 +315,9 @@ useEffect(() => {
         </Box>
       </Box>
       <Dialog open={openDialog} onClose={handleClose} maxWidth="md" fullWidth>
-        <DialogTitle>{selectedFile?.title || selectedFile?.file_name}</DialogTitle>
+        <DialogTitle>
+          {selectedFile?.title || selectedFile?.file_name}
+        </DialogTitle>
 
         <DialogContent
           sx={{
@@ -360,23 +352,26 @@ useEffect(() => {
               />
             )} */}
 
-            {/* MARKDOWN FILE */}
-              {selectedFile?.file_name?.endsWith(".md") && fileBlob && (
-                <MarkdownPreview blob={fileBlob} />
-              )}
+          {/* MARKDOWN FILE */}
+          {selectedFile?.file_name?.endsWith(".md") && fileBlob && (
+            <MarkdownPreview blob={fileBlob} />
+          )}
 
-              {/* PDF */}
-              {selectedFile?.file_name?.endsWith(".pdf") && fileBlob && (
-                <iframe
-                  src={URL.createObjectURL(fileBlob)}
-                  style={{ width: "100%", height: "80vh", border: "none" }}
-                />
-              )}
+          {/* PDF */}
+          {selectedFile?.file_name?.endsWith(".pdf") && fileBlob && (
+            <iframe
+              src={URL.createObjectURL(fileBlob)}
+              style={{ width: "100%", height: "80vh", border: "none" }}
+            />
+          )}
 
-              {/* DOCX */}
-              {selectedFile?.file_name?.endsWith(".docx") && fileBlob && (
-                <div id="docx-container" style={{ height: "80vh", overflow: "auto" }} />
-              )}
+          {/* DOCX */}
+          {selectedFile?.file_name?.endsWith(".docx") && fileBlob && (
+            <div
+              id="docx-container"
+              style={{ height: "80vh", overflow: "auto" }}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </Box>

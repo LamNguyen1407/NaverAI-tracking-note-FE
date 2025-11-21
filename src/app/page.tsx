@@ -106,21 +106,26 @@ export default function HeroSection() {
             transition={{ duration: 2, ease: "easeOut", delay: 1 }}
           />
 
-          <button
+          <motion.button
             onClick={() => window.open("https://google.com", "_blank")}
+            initial={{ opacity: 0, x: -40 }} // ← từ trái đi ra
+            animate={{ opacity: 1, x: 0 }} // → cùng timeline START
+            transition={{
+              duration: 1,
+              ease: "easeOut",
+              delay: 1,
+            }}
             className="
-              absolute 
-              left-30 bottom-10
-              w-[300px] h-[200px]
-              flex items-start justify-start
-              pt-[50px] pl-[90px]
-              font-bold text-[#3A1F0B]
-              text-2xl
-              hover:scale-105
-              transition-all duration-200
-              cursor-pointer
-              z-50
-            "
+    absolute 
+    left-30 bottom-10
+    w-[300px] h-[200px]
+    flex items-start justify-start
+    pt-[50px] pl-[90px]
+    font-bold text-[#3A1F0B]
+    text-2xl
+    cursor-pointer z-50
+    hover:scale-105 transition-all duration-200
+  "
             style={{
               backgroundImage: `url(${woodenSignboard})`,
               backgroundSize: "cover",
@@ -129,7 +134,7 @@ export default function HeroSection() {
             }}
           >
             Extension
-          </button>
+          </motion.button>
         </div>
 
         {/* ===== MAIN CONTENT (FLEX) ===== */}

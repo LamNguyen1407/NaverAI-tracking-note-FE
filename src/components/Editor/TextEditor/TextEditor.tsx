@@ -96,7 +96,6 @@ import {
   InsertTable,
   Separator,
 } from "@mdxeditor/editor";
-// import { GlassCard } from "@developer-hub/liquid-glass";
 import { initialMarkdown } from "./initialMarkdown";
 
 // --- Types cho Mock Data ---
@@ -113,71 +112,19 @@ interface VerificationResult {
   expanded?: boolean; // state để toggle mở/đóng
 }
 
-// ... (Phần render bên dưới)
-
 const TextEditor = ({ content }: any) => {
   const [markdown, setMarkdown] = useState(initialMarkdown);
   const [showSidebar, setShowSidebar] = useState(true);
-  // State lưu danh sách kết quả Mock
-  // const [results, setResults] = useState<VerificationResult[]>([]);
 
   const handleEditorChange = (newMarkdown: string) => {
     setMarkdown(newMarkdown);
   };
-
-  // // --- LOGIC 1: Giả lập gọi API tạo Mock Data ---
-  // const simulateApiCall = (text: string) => {
-  //   const newId = Date.now().toString();
-
-  //   const newItem: VerificationResult = {
-  //     id: newId,
-  //     type: "manual",
-  //     status: "loading",
-  //     message: `Analyzing selection (${text.length} chars)...`,
-  //     selectedTextPreview:
-  //       text.substring(0, 20) + (text.length > 20 ? "..." : ""),
-  //     rawText: text, // lưu bản gốc để hiển thị row 2
-  //     timestamp: new Date().toLocaleTimeString(),
-  //     expanded: false, // default đóng
-  //     sources: [],
-  //   };
-
-  //   setResults((prev) => [newItem, ...prev]);
-
-  //   setTimeout(() => {
-  //     const isConflict = Math.random() > 0.5;
-
-  //     setResults((prev) =>
-  //       prev.map((item) =>
-  //         item.id === newId
-  //           ? {
-  //               ...item,
-  //               status: isConflict ? "conflict" : "safe",
-  //               message: isConflict
-  //                 ? `Ambiguous content found.`
-  //                 : `Content verified successfully.`,
-  //               sources: isConflict
-  //                 ? [
-  //                     "Policy 12.4 — Misinformation Clause: Điều khoản này nhấn mạnh rằng những nội dung có khả năng gây hiểu nhầm hoặc được diễn giải sai theo ngữ cảnh phải được kiểm duyệt cẩn thận. Quy tắc này được áp dụng đặc biệt với các cụm từ dễ mang nhiều lớp nghĩa, có thể dẫn đến hiểu lầm trong môi trường chính sách hoặc pháp lý.",
-
-  //                     "Rule 8 — Sensitive Variants: Quy định này mô tả các biến thể ngôn ngữ nhạy cảm, bao gồm từ, cụm từ, hoặc cấu trúc câu có khả năng bị hiểu theo hướng tiêu cực hoặc nguy hiểm. Những biến thể này phải được đánh giá dựa trên ngữ cảnh sử dụng và khả năng gây ra ảnh hưởng tiêu cực.",
-
-  //                     "Matched Phrase: “danger zone”: Cụm từ này thường được xem là mơ hồ trong những tài liệu phân tích rủi ro hoặc cảnh báo an toàn. Tùy theo bối cảnh, 'danger zone' có thể ám chỉ khu vực vật lý nguy hiểm, trạng thái rủi ro chính trị, hoặc điều kiện không an toàn. Vì vậy, hệ thống đánh dấu nó như một cụm từ cần xem xét thêm khi đánh giá nội dung.",
-  //                   ]
-  //                 : [],
-  //             }
-  //           : item
-  //       )
-  //     );
-  //   }, 1500);
-  // };
 
   const [results, setResults] = useState<UnifiedResultItem[]>([]);
   const [loading, setLoading] = useState(false);
 
   const simulateApiCall = ({ selectedText }: any) => {
     setLoading(true);
-    setResults([]); // Clear cũ
 
     setTimeout(() => {
       // MOCK RESPONSE TỪ AI
@@ -294,7 +241,7 @@ const TextEditor = ({ content }: any) => {
         });
       });
 
-      setResults(newItems);
+      setResults((prev) => [...newItems, ...prev]);
       setLoading(false);
     }, 1500);
   };
@@ -306,21 +253,6 @@ const TextEditor = ({ content }: any) => {
         item.id === id ? { ...item, expanded: !item.expanded } : item
       )
     );
-  };
-
-  const shortenText = (text: string) => {
-    if (!text) return "";
-
-    // Nếu text ngắn thì giữ nguyên
-    if (text.length < 200) return text;
-
-    // Lấy đoạn đầu (100–180 ký tự)
-    const start = text.slice(0, 160).trim();
-
-    // Lấy đoạn cuối (50–80 ký tự)
-    const end = text.slice(-80).trim();
-
-    return `${start}     ··· ··· ···     ${end}`;
   };
 
   // --- LOGIC 2: Xử lý nút "Check Selection" ---
@@ -336,8 +268,13 @@ const TextEditor = ({ content }: any) => {
   };
 
   // Hàm xóa card
-  const dismissResult = (id: string) => {
-    setResults((prev) => prev.filter((r) => r.id !== id));
+  const handleDelete = async (idString: string) => {
+    // Mock API Call
+    // await api.deleteItem(idString);
+    console.log("Deleted item:", idString);
+
+    // Cập nhật State (Số thứ tự sẽ tự động tính lại khi render)
+    setResults((prev) => prev.filter((item) => item.id !== idString));
   };
 
   // Helper lấy màu và icon dựa trên type
@@ -371,11 +308,6 @@ const TextEditor = ({ content }: any) => {
     <Box>
       <Box
         sx={{
-          // background:
-          //   "linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0.8), rgba(255,255,255,0.6))",
-          // borderRadius: "15px",
-          // border: "1px solid rgba(255,255,255,0.18)",
-
           background:
             "linear-gradient(180deg, rgba(255,255,255,0.2), rgba(255,255,255,0.5), rgba(255,255,255,0.3))",
           backdropFilter: "blur(14px)",
@@ -513,7 +445,6 @@ const TextEditor = ({ content }: any) => {
             borderRadius: showSidebar ? "20px" : "0px",
 
             background: "rgba(255, 255, 255, 0.15)",
-            // backdropFilter: "blur(0.5px)",
             WebkitBackdropFilter: "blur(2px)",
             border: showSidebar ? "1px solid rgba(255,255,255,0.22)" : "none",
             boxShadow: "0 6px 24px rgba(0,0,0,0.08)",
@@ -596,6 +527,7 @@ const TextEditor = ({ content }: any) => {
               {results.map((res, index) => {
                 const config = getTypeConfig(res.type);
 
+                const displayNumber = results.length - index;
                 return (
                   <Card
                     key={res.id}
@@ -617,20 +549,25 @@ const TextEditor = ({ content }: any) => {
                     }}
                   >
                     <CardContent sx={{ p: "16px !important" }}>
-                      {/* --- ROW 1: Icon + Message | Index --- */}
+                      {/* --- ROW 1: Icon + Message | Index + Close Button --- */}
                       <Box
                         sx={{
                           display: "flex",
-                          justifyContent: "space-between", // Để đẩy số thứ tự sang phải
-                          alignItems: "center",
+                          justifyContent: "space-between",
+                          alignItems: "flex-start", // Căn lề trên để nút X không bị lệch
                           mb: 1.5,
                           pb: 1,
-                          borderBottom: `1px solid ${config.border}`, // Line ngăn cách nhẹ
+                          borderBottom: `1px solid ${config.border}`,
                         }}
                       >
                         {/* Left: Icon & Message */}
                         <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1,
+                            mt: 0.5,
+                          }}
                         >
                           {config.icon}
                           <Typography
@@ -640,25 +577,49 @@ const TextEditor = ({ content }: any) => {
                               fontWeight: 700,
                               textTransform: "uppercase",
                               fontSize: "0.75rem",
-                              letterSpacing: "0.5px",
                             }}
                           >
                             {res.displayMessage}
                           </Typography>
                         </Box>
 
-                        {/* Right: Index Number */}
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            color: "text.disabled",
-                            fontWeight: 600,
-                            fontFamily: "monospace",
-                            fontSize: "0.85rem",
-                          }}
+                        {/* Right: Index Number & Delete Button */}
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
                         >
-                          #{String(index + 1).padStart(2, "0")}
-                        </Typography>
+                          {/* Hiển thị số thứ tự đã tính toán */}
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color: "text.disabled",
+                              fontWeight: 600,
+                              fontFamily: "monospace",
+                              fontSize: "0.9rem",
+                            }}
+                          >
+                            #{String(displayNumber).padStart(2, "0")}
+                          </Typography>
+
+                          {/* Nút Xóa */}
+                          <IconButton
+                            size="small"
+                            onClick={() => handleDelete(res.id)}
+                            sx={{
+                              color: "text.disabled",
+                              padding: 0,
+                              ml: 0.5,
+                              "&:hover": {
+                                color: "error.main",
+                                bgcolor: "transparent",
+                              },
+                            }}
+                          >
+                            <CloseIcon
+                              fontSize="small"
+                              sx={{ fontSize: "1.1rem" }}
+                            />
+                          </IconButton>
+                        </Box>
                       </Box>
 
                       {/* --- ROW 2: Sentence (New Note Sentence) --- */}
@@ -770,7 +731,7 @@ const TextEditor = ({ content }: any) => {
                                 mt: 1,
                                 p: 1.5,
                                 borderRadius: "8px",
-                                bgcolor: "rgba(0,0,0,0.2)",
+                                bgcolor: "rgba(0,0,0,0.1)",
                               }}
                             >
                               {res.sources.map((src, i) => (

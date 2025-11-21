@@ -194,7 +194,14 @@ const TextEditor = () => {
   };
 
   return (
-    <GlassCard cornerRadius={25}>
+    <Box
+      sx={{
+        borderRadius: 2,
+        boxShadow: "0 8px 20px rgba(0,0,0,0.15)",
+        backgroundColor: "rgba(255,255,255,0.85)",
+        backdropFilter: "none",
+      }}
+    >
       {/* CHIA LAYOUT: FLEX ROW */}
       <Box
         sx={{
@@ -409,7 +416,7 @@ const TextEditor = () => {
           </Box>
         </Box>
       </Box>
-    </GlassCard>
+      </Box>
   );
 };
 

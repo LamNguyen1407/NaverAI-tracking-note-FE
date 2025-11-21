@@ -1,24 +1,22 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Box, CssBaseline } from "@mui/material";
-import Sidebar from "@/components/Editor/Sidebar";
 import Grid from "@mui/material/Grid";
-import { GlassCard } from "@developer-hub/liquid-glass";
-
-import NoteOutlinedIcon from "@mui/icons-material/NoteOutlined";
-import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
-import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 
 import { useSidebar } from "@/context/SidebarContext";
 
 import { Dialog, DialogTitle, DialogContent } from "@mui/material";
 import ReactMarkdown from "react-markdown";
 import { renderAsync } from "docx-preview";
-import { set } from "zod";
+import DocumentList from "@/components/File/DocumentList";
+import NoteList from "@/components/File/NoteList";
 
 const MENU_ICON_URL = "/assets/starfish.png";
 const MAIN_BG_URL = "/assets/files5.png";
+
+//cached note , document data
+let cachedMetadata: { notes: any[]; docs: any[] } | null = null;
 
 // mockData để giả lập API
 // const mockData = {
@@ -58,7 +56,19 @@ function MarkdownPreview({ blob }: { blob: Blob }) {
     blob.text().then(setText);
   }, [blob]);
 
-  return <ReactMarkdown>{text}</ReactMarkdown>;
+  return (
+    <div
+      style={{
+        height: "80vh",         
+        overflowY: "auto",      
+        padding: "16px",        
+        background: "white",    
+        borderRadius: "8px",
+      }}
+    >
+      <ReactMarkdown>{text}</ReactMarkdown>
+    </div>
+  );
 }
 
 function Files() {
@@ -93,40 +103,53 @@ function Files() {
   const [notes, setNotes] = useState<any[]>([]);
   const [documents, setDocuments] = useState<any[]>([]);
 
-  useEffect(() => {
-    if (openDialog && fileBlob && selectedFile?.file_name.endsWith(".docx")) {
-      const container = document.getElementById("docx-container");
-      if (!container) return;
 
-      container.innerHTML = "";
-      renderAsync(fileBlob, container as HTMLElement);
-    }
-  }, [openDialog, fileBlob]);
+useEffect(() => {
+  if (!openDialog || !fileBlob) return;
+  if (!selectedFile?.file_name?.endsWith(".docx")) return;
+
+  const renderDoc = async () => {
+    await new Promise((r) => setTimeout(r, 20)); // chờ dialog render container
+
+    const container = document.getElementById("docx-container");
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    const buf = await fileBlob.arrayBuffer();
+    renderAsync(buf, container);
+  };
+
+  renderDoc();
+}, [openDialog]);
+
 
   useEffect(() => {
   const fetchFiles = async () => {
     try {
-      // Lấy Note
-      const noteRes = await fetch(`${process.env.NEXT_PUBLIC_API}/files/metadata/note`);
-      const noteData = await noteRes.json();
-      setNotes(noteData.files)
-      // setNotes(noteData.files.map((f: any, idx: number) => ({
-      //   id: idx + 1,
-      //   title: f.file_name,
-      //   size: `${f.size} KB`,
-      //   last_modified: f.last_modified
-      // })));
+      // Kiểm tra cache trước
+      if (cachedMetadata) {
+        setNotes(cachedMetadata.notes);
+        setDocuments(cachedMetadata.docs);
+        return;
+      }
+      // Lấy Note và Document
+      const [noteRes, docRes] = await Promise.all([
+        fetch(`${process.env.NEXT_PUBLIC_API}/files/metadata/note`),
+        fetch(`${process.env.NEXT_PUBLIC_API}/files/metadata/document`),
+      ]);
 
-      // Lấy Document
-      const docRes = await fetch(`${process.env.NEXT_PUBLIC_API}/files/metadata/document`);
-      const docData = await docRes.json();
-      setDocuments(docData.files)
-      // setDocuments(docData.files.map((f: any, idx: number) => ({
-      //   id: idx + 1,
-      //   name: f.file_name,
-      //   size: `${(f.size / 1024).toFixed(2)} KB`,
-      //   last_modified: f.last_modified
-      // })));
+      const [noteData, docData] = await Promise.all([
+        noteRes.json(),
+        docRes.json(),
+      ]);
+      // Lưu vào cache
+      cachedMetadata = { notes: noteData.files, docs: docData.files };
+
+      // Cập nhật state
+      setNotes(noteData.files);
+      setDocuments(docData.files);
+     
     } catch (err) {
       console.error("Failed to fetch files metadata", err);
     }
@@ -240,47 +263,7 @@ function Files() {
             >
               <Grid container spacing={2}>
                 {notes.map((note) => (
-                  <Grid key={note.etag} size={{ xs: 6, sm: 4, md: 3 }}>
-                    <Box
-                      className="
-                        backdrop-blur-md
-                        rounded-xl
-                        border border-white/20
-                        shadow-[0_4px_18px_rgba(0,0,0,0.25)]
-                        transition-all duration-300
-                        hover:bg-white/15
-                        hover:shadow-[0_6px_28px_rgba(0,0,0,0.35)]
-                        hover:-translate-y-1
-                      "
-                      onClick={() => handleOpen(note)}
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 2,
-                        padding: 2,
-                        color: "black",
-                        background: `linear-gradient(
-                        135deg,
-                        rgba(255, 193, 7, 0.5),
-                        rgba(255, 152, 0, 0.5)
-                      )`,
-                        cursor: "pointer",
-                      }}
-                    >
-                      {/* 🎨 NOTE ICON → tím gradient */}
-                      <NoteOutlinedIcon
-                        sx={{
-                          fontSize: 32,
-                        }}
-                      />
-
-                      <Box>
-                        <strong>{note.file_name}</strong>
-                        <p style={{ margin: 0 }}>Size: {note.size} B</p>
-                        <p style={{ margin: 0 }}>Last Modified: {note.last_modified.slice(0, 10)}</p>
-                      </Box>
-                    </Box>
-                  </Grid>
+                  <NoteList note={note} handleOpen={handleOpen} />
                 ))}
               </Grid>
             </Box>
@@ -334,56 +317,7 @@ function Files() {
             >
               <Grid container spacing={2}>
                 {documents.map((doc) => (
-                  <Grid key={doc.etag} size={{ xs: 6, sm: 4, md: 3 }}>
-                    <Box
-                      className="
-                      backdrop-blur-md
-                      rounded-xl
-                      border border-white/20
-                      shadow-[0_4px_18px_rgba(0,0,0,0.25)]
-                      transition-all duration-300
-                      hover:bg-white/15
-                      hover:shadow-[0_6px_28px_rgba(0,0,0,0.35)]
-                      hover:-translate-y-1
-                    "
-                      onClick={() => handleOpen(doc)}
-                      sx={{
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 2,
-                        padding: 2,
-                        color: "white",
-                        background: doc.file_name.endsWith(".pdf")
-                          ? "linear-gradient(135deg, rgba(211,47,47,0.5), rgba(211,47,47,0.5))"
-                          : "linear-gradient(135deg, rgba(25,118,210,0.5), rgba(25,118,210,0.5))",
-                        "&:hover": {
-                          background: doc.file_name.endsWith(".pdf")
-                            ? "linear-gradient(135deg, rgba(211,47,47,0.5), rgba(211,47,47,0.5))"
-                            : "linear-gradient(135deg, rgba(25,118,210,0.5), rgba(25,118,210,0.5))",
-                          boxShadow: "0 6px 28px rgba(0,0,0,0.8)",
-                        },
-                      }}
-                    >
-                      {/* 🎨 PDF icon → màu đỏ */}
-                      {doc.file_name.endsWith(".pdf") ? (
-                        <PictureAsPdfIcon
-                          sx={{ fontSize: 32, color: "#d32f2f" }}
-                        />
-                      ) : (
-                        /* 🎨 DOCX icon → xanh dương */
-                        <DescriptionOutlinedIcon
-                          sx={{ fontSize: 32, color: "#2a3b8f" }}
-                        />
-                      )}
-
-                      <Box>
-                        <strong>{doc.file_name}</strong>
-                        <p style={{ margin: 0 }}>{"Size: " +(doc.size/1024).toFixed(2)} KB</p>
-                        <p style={{ margin: 0 }}>{"Last Modified: " +doc.last_modified.slice(0, 10)}</p>
-                      </Box>
-                    </Box>
-                  </Grid>
+                  <DocumentList doc={doc} handleOpen={handleOpen} />
                 ))}
               </Grid>
             </Box>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { use, useEffect, useState } from "react";
+import React, { useState } from "react";
 // Import UI Components
 import {
   Box,
@@ -13,10 +13,67 @@ import {
   IconButton,
 } from "@mui/material";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import CloseIcon from "@mui/icons-material/Close";
 import SmartToyIcon from "@mui/icons-material/SmartToy";
 import MenuOpenIcon from "@mui/icons-material/MenuOpen";
+
+import WarningAmberIcon from "@mui/icons-material/WarningAmber"; // Conflict
+import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh"; // Improvement
+import PsychologyAltIcon from "@mui/icons-material/PsychologyAlt"; // Hallucination
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+
+// --- 1. Types definitions based on New JSON ---
+
+interface ConflictItem {
+  new_note_sentence: string;
+  evidence_from_sources: string[];
+  reason: string;
+  suggested_rewrite: string;
+}
+
+interface ImprovementItem {
+  new_note_sentence: string;
+  missing_context: string;
+  suggested_addition: string;
+}
+
+interface HallucinationItem {
+  new_note_sentence: string;
+  reason: string;
+  suggested_rewrite: string;
+}
+
+interface AIResponse {
+  conflicts: ConflictItem[];
+  improvements: ImprovementItem[];
+  hallucinations: HallucinationItem[];
+  summary: string;
+}
+
+// --- 2. Unified Type for Rendering (Normalized) ---
+// Để dễ map trong JSX, ta gộp 3 loại trên về 1 chuẩn chung
+interface UnifiedResultItem {
+  id: string;
+  type: "conflict" | "improvement" | "hallucination";
+
+  // Row 1 Data
+  displayMessage: string; // Message ngắn gọn
+
+  // Row 2 Data
+  sentence: string; // new_note_sentence
+
+  // Row 3 Data
+  reason: string; // reason HOẶC missing_context
+
+  // Row 4 Data
+  suggestion: string; // suggested_rewrite HOẶC suggested_addition
+
+  // Expandable Data
+  sources?: string[]; // evidence_from_sources (chỉ conflict mới có trong mẫu)
+
+  expanded: boolean; // State UI
+}
 
 import "@mdxeditor/editor/style.css";
 import "./editorStyles.css";
@@ -56,67 +113,199 @@ interface VerificationResult {
   expanded?: boolean; // state để toggle mở/đóng
 }
 
-interface TextEditorProps {
-  content: string;   // markdown từ file thật
-  fileName?: string; // tên file (hiển thị trong header nếu cần)
-}
+// ... (Phần render bên dưới)
 
-
-const TextEditor = ({content}: TextEditorProps) => {
-  const [markdown, setMarkdown] = useState(content);
+const TextEditor = ({ content }: any) => {
+  const [markdown, setMarkdown] = useState(initialMarkdown);
   const [showSidebar, setShowSidebar] = useState(true);
   // State lưu danh sách kết quả Mock
-  const [results, setResults] = useState<VerificationResult[]>([]);
+  // const [results, setResults] = useState<VerificationResult[]>([]);
 
   const handleEditorChange = (newMarkdown: string) => {
     setMarkdown(newMarkdown);
   };
 
-  // --- LOGIC 1: Giả lập gọi API tạo Mock Data ---
-  const simulateApiCall = (text: string) => {
-    const newId = Date.now().toString();
+  // // --- LOGIC 1: Giả lập gọi API tạo Mock Data ---
+  // const simulateApiCall = (text: string) => {
+  //   const newId = Date.now().toString();
 
-    const newItem: VerificationResult = {
-      id: newId,
-      type: "manual",
-      status: "loading",
-      message: `Analyzing selection (${text.length} chars)...`,
-      selectedTextPreview:
-        text.substring(0, 20) + (text.length > 20 ? "..." : ""),
-      rawText: text, // lưu bản gốc để hiển thị row 2
-      timestamp: new Date().toLocaleTimeString(),
-      expanded: false, // default đóng
-      sources: [],
-    };
+  //   const newItem: VerificationResult = {
+  //     id: newId,
+  //     type: "manual",
+  //     status: "loading",
+  //     message: `Analyzing selection (${text.length} chars)...`,
+  //     selectedTextPreview:
+  //       text.substring(0, 20) + (text.length > 20 ? "..." : ""),
+  //     rawText: text, // lưu bản gốc để hiển thị row 2
+  //     timestamp: new Date().toLocaleTimeString(),
+  //     expanded: false, // default đóng
+  //     sources: [],
+  //   };
 
-    setResults((prev) => [newItem, ...prev]);
+  //   setResults((prev) => [newItem, ...prev]);
+
+  //   setTimeout(() => {
+  //     const isConflict = Math.random() > 0.5;
+
+  //     setResults((prev) =>
+  //       prev.map((item) =>
+  //         item.id === newId
+  //           ? {
+  //               ...item,
+  //               status: isConflict ? "conflict" : "safe",
+  //               message: isConflict
+  //                 ? `Ambiguous content found.`
+  //                 : `Content verified successfully.`,
+  //               sources: isConflict
+  //                 ? [
+  //                     "Policy 12.4 — Misinformation Clause: Điều khoản này nhấn mạnh rằng những nội dung có khả năng gây hiểu nhầm hoặc được diễn giải sai theo ngữ cảnh phải được kiểm duyệt cẩn thận. Quy tắc này được áp dụng đặc biệt với các cụm từ dễ mang nhiều lớp nghĩa, có thể dẫn đến hiểu lầm trong môi trường chính sách hoặc pháp lý.",
+
+  //                     "Rule 8 — Sensitive Variants: Quy định này mô tả các biến thể ngôn ngữ nhạy cảm, bao gồm từ, cụm từ, hoặc cấu trúc câu có khả năng bị hiểu theo hướng tiêu cực hoặc nguy hiểm. Những biến thể này phải được đánh giá dựa trên ngữ cảnh sử dụng và khả năng gây ra ảnh hưởng tiêu cực.",
+
+  //                     "Matched Phrase: “danger zone”: Cụm từ này thường được xem là mơ hồ trong những tài liệu phân tích rủi ro hoặc cảnh báo an toàn. Tùy theo bối cảnh, 'danger zone' có thể ám chỉ khu vực vật lý nguy hiểm, trạng thái rủi ro chính trị, hoặc điều kiện không an toàn. Vì vậy, hệ thống đánh dấu nó như một cụm từ cần xem xét thêm khi đánh giá nội dung.",
+  //                   ]
+  //                 : [],
+  //             }
+  //           : item
+  //       )
+  //     );
+  //   }, 1500);
+  // };
+
+  const [results, setResults] = useState<UnifiedResultItem[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const simulateApiCall = ({ selectedText }: any) => {
+    setLoading(true);
+    setResults([]); // Clear cũ
 
     setTimeout(() => {
-      const isConflict = Math.random() > 0.5;
+      // MOCK RESPONSE TỪ AI
+      const apiResponse: AIResponse = {
+        conflicts: [
+          {
+            new_note_sentence:
+              "Bộ ba Tam đầu chế đầu tiên. Đây là một thỏa thuận bí mật giữa ba người đàn ông quyền lực nhất lúc bấy giờ: Julius Caesar, Pompey Đại đế, và Augustus.",
+            evidence_from_sources: [
+              "Bộ ba Tam đầu chế đầu tiên gồm Caesar, Pompey và Crassus.",
+            ],
+            reason:
+              "Augustus không thuộc Bộ ba Tam đầu chế đầu tiên; thay vì Augustus, người là thừa kế của Caesar, một phần của liên minh là Crassus.",
+            suggested_rewrite:
+              "Bộ ba Tam đầu chế đầu tiên gồm Julius Caesar, Pompey Đại đế và Marcus Licinius Crassus.",
+          },
+          {
+            new_note_sentence:
+              "Augustus đã bị giết trong một trận chiến ở phía Đông, chống lại người Hy Lạp, vào khoảng năm 53 TCN.",
+            evidence_from_sources: [
+              "Crassus bị tiêu diệt tại Trận Carrhae (53 TCN)...",
+            ],
+            reason:
+              "Không Augustus mà Crassus là người chết tại thời điểm này.",
+            suggested_rewrite:
+              "Marcus Licinius Crassus đã bị tiêu diệt tại Trận Carrhae ở phía Đông vào năm 53 TCN.",
+          },
+          {
+            new_note_sentence:
+              "Caesar được giết vào ngày Ides of March (15 tháng 3), năm 49 TCN...",
+            evidence_from_sources: [
+              "Caesar bị ám sát vào ngày Ides of March năm 44 TCN.",
+            ],
+            reason: "Năm ám sát Caesar là 44 TCN, không 49 TCN.",
+            suggested_rewrite:
+              "Caesar được giết vào ngày Ides of March năm 44 TCN.",
+          },
+        ],
+        improvements: [
+          {
+            new_note_sentence:
+              "Caesar vượt sông Rubicon cùng với quân đoàn của mình vào năm 49 TCN, nói lời 'Alea iacta est', mở đầu cuộc nội chiến chống lại Pompey.",
+            missing_context:
+              "Câu 'Alea iacta est' (con xúc xắc đã được gieo) là một víêt quan trọng của Caesar khi vượt sông Rubicon.",
+            suggested_addition:
+              "Caesar vượt sông Rubicon cùng với quân đoàn và nói lời 'Alea iacta est', mở đầu cuộc nội chiến chống lại Pompey.",
+          },
+        ],
+        hallucinations: [
+          {
+            new_note_sentence:
+              "Augustus là hoàng đế đầu tiên, nhưng ông ta đủ thông minh để không bao giờ tự gọi mình như vậy.",
+            reason:
+              "Augustus thực sự xác nhận danh hiệu 'Augustus' và 'Imperator'.",
+            suggested_rewrite:
+              "Augustus giữ danh hiệu 'Augustus' và 'Princeps', nhưng quyền lực thực tế của ông ta khởi đầu Đế chế La Mã.",
+          },
+          {
+            new_note_sentence:
+              "Ông ta tuyên bố từ bỏ tất cả quyền lực phi thường của mình và trao lại quyền lực cho Thượng viện và Nhân dân Rome.",
+            reason:
+              "Augustus giữ quyền lực thực tế thông qua các danh hiệu cộng hòa (tribunician power, imperium).",
+            suggested_rewrite:
+              "Augustus giữ quyền lực thực tế thông qua các danh hiệu cộng hòa và kiểm soát quân đội, dưới bức màn 'phục hồi cộng hòa'.",
+          },
+        ],
+        summary:
+          "Note có nhiều lỗi: Augustus không thuộc Bộ ba Tam đầu chế đầu tiên, Crassus chết tại Carrhae, Caesar bị giết năm 44 TCN. Cần sửa nhân vật và lịch sử. Cũng cần chỉ ra rằng Augustus giữ quyền lực thực tế dưới dạng 'phục hồi cộng hòa'.",
+      };
 
-      setResults((prev) =>
-        prev.map((item) =>
-          item.id === newId
-            ? {
-                ...item,
-                status: isConflict ? "conflict" : "safe",
-                message: isConflict
-                  ? `Ambiguous content found.`
-                  : `Content verified successfully.`,
-                sources: isConflict
-                  ? [
-                      "Policy 12.4 — Misinformation Clause: Điều khoản này nhấn mạnh rằng những nội dung có khả năng gây hiểu nhầm hoặc được diễn giải sai theo ngữ cảnh phải được kiểm duyệt cẩn thận. Quy tắc này được áp dụng đặc biệt với các cụm từ dễ mang nhiều lớp nghĩa, có thể dẫn đến hiểu lầm trong môi trường chính sách hoặc pháp lý.",
+      // --- TRANSFORM DATA ---
+      // Chuyển đổi JSON cục thành mảng phẳng để render list
+      const newItems: UnifiedResultItem[] = [];
 
-                      "Rule 8 — Sensitive Variants: Quy định này mô tả các biến thể ngôn ngữ nhạy cảm, bao gồm từ, cụm từ, hoặc cấu trúc câu có khả năng bị hiểu theo hướng tiêu cực hoặc nguy hiểm. Những biến thể này phải được đánh giá dựa trên ngữ cảnh sử dụng và khả năng gây ra ảnh hưởng tiêu cực.",
+      // 1. Process Conflicts
+      apiResponse.conflicts.forEach((item) => {
+        newItems.push({
+          id: Math.random().toString(36).substr(2, 9),
+          type: "conflict",
+          displayMessage: "Detected Contradiction", // Message ngắn gọn
+          sentence: item.new_note_sentence,
+          reason: item.reason,
+          suggestion: item.suggested_rewrite,
+          sources: item.evidence_from_sources,
+          expanded: false,
+        });
+      });
 
-                      "Matched Phrase: “danger zone”: Cụm từ này thường được xem là mơ hồ trong những tài liệu phân tích rủi ro hoặc cảnh báo an toàn. Tùy theo bối cảnh, 'danger zone' có thể ám chỉ khu vực vật lý nguy hiểm, trạng thái rủi ro chính trị, hoặc điều kiện không an toàn. Vì vậy, hệ thống đánh dấu nó như một cụm từ cần xem xét thêm khi đánh giá nội dung.",
-                    ]
-                  : [],
-              }
-            : item
-        )
-      );
+      // 2. Process Improvements
+      apiResponse.improvements.forEach((item) => {
+        newItems.push({
+          id: Math.random().toString(36).substr(2, 9),
+          type: "improvement",
+          displayMessage: "Context Suggestion", // Message ngắn gọn
+          sentence: item.new_note_sentence,
+          reason: item.missing_context, // Map missing_context vào reason để hiển thị
+          suggestion: item.suggested_addition,
+          sources: [],
+          expanded: false,
+        });
+      });
+
+      // 3. Process Hallucinations
+      apiResponse.hallucinations.forEach((item) => {
+        newItems.push({
+          id: Math.random().toString(36).substr(2, 9),
+          type: "hallucination",
+          displayMessage: "Unverified Info", // Message ngắn gọn
+          sentence: item.new_note_sentence,
+          reason: item.reason,
+          suggestion: item.suggested_rewrite,
+          sources: [], // Hallucination thường ko có source chứng minh (vì tìm ko thấy)
+          expanded: false,
+        });
+      });
+
+      setResults(newItems);
+      setLoading(false);
     }, 1500);
+  };
+
+  // Helper toggle expand
+  const toggleExpand = (id: string) => {
+    setResults((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, expanded: !item.expanded } : item
+      )
+    );
   };
 
   const shortenText = (text: string) => {
@@ -151,16 +340,35 @@ const TextEditor = ({content}: TextEditorProps) => {
     setResults((prev) => prev.filter((r) => r.id !== id));
   };
 
+  // Helper lấy màu và icon dựa trên type
+  const getTypeConfig = (type: UnifiedResultItem["type"]) => {
+    switch (type) {
+      case "conflict":
+        return {
+          color: "#ff5050", // Đỏ
+          bg: "rgba(255, 80, 80, 0.1)",
+          border: "rgba(255, 80, 80, 0.3)",
+          icon: <WarningAmberIcon sx={{ color: "#ff5050", fontSize: 20 }} />,
+        };
+      case "hallucination":
+        return {
+          color: "#ffa726", // Cam
+          bg: "rgba(255, 167, 38, 0.1)",
+          border: "rgba(255, 167, 38, 0.3)",
+          icon: <PsychologyAltIcon sx={{ color: "#ffa726", fontSize: 20 }} />,
+        };
+      case "improvement":
+        return {
+          color: "#29b6f6", // Xanh dương sáng
+          bg: "rgba(41, 182, 246, 0.1)",
+          border: "rgba(41, 182, 246, 0.3)",
+          icon: <AutoFixHighIcon sx={{ color: "#29b6f6", fontSize: 20 }} />,
+        };
+    }
+  };
+
   return (
-    <Box
-      sx={{
-        borderRadius: 2,
-        boxShadow: "0 8px 20px rgba(0,0,0,0.15)",
-        backgroundColor: "rgba(255,255,255,0.85)",
-        backdropFilter: "none",
-      }}
-    >
-      {/* CHIA LAYOUT: FLEX ROW */}
+    <Box>
       <Box
         sx={{
           // background:
@@ -385,133 +593,209 @@ const TextEditor = ({content}: TextEditorProps) => {
                 </Typography>
               )}
 
-              {results.map((res) => (
-                <Card
-                  key={res.id}
-                  sx={{
-                    background: "rgba(255,255,255,0.06)",
-                    backdropFilter: "blur(8px)",
-                    WebkitBackdropFilter: "blur(8px)",
-                    border: "1px solid rgba(255,255,255,0.18)",
-                    borderRadius: "14px",
-                    boxShadow: "0 4px 16px rgba(0,0,0,0.04)",
-                    transition: "all 0.25s ease",
+              {results.map((res, index) => {
+                const config = getTypeConfig(res.type);
 
-                    borderColor:
-                      res.status === "conflict"
-                        ? "rgba(255, 80, 80, 0.35)"
-                        : "rgba(255, 255, 255, 0.18)",
-
-                    "&:hover": {
-                      background: "rgba(255,255,255,0.10)",
-                      transform: "translateY(-2px)",
-                      boxShadow: "0 8px 20px rgba(0,0,0,0.12)",
-                    },
-                  }}
-                >
-                  <CardContent sx={{ p: "12px !important" }}>
-                    {/* Hàng 1: Icon + Reason */}
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        mb: 1,
-                      }}
-                    >
-                      {res.status === "loading" && (
-                        <CircularProgress size={16} />
-                      )}
-                      {res.status === "conflict" && (
-                        <WarningAmberIcon color="error" fontSize="small" />
-                      )}
-                      {res.status === "safe" && (
-                        <CheckCircleOutlineIcon
-                          color="success"
-                          fontSize="small"
-                        />
-                      )}
-
-                      <Typography
-                        variant="body2"
-                        fontWeight={res.status === "loading" ? 400 : 600}
-                      >
-                        {res.message}
-                      </Typography>
-                    </Box>
-
-                    {/* Hàng 2: rút gọn nội dung gốc */}
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        fontSize: "0.78rem",
-                        color: "text.secondary",
-                        mb: 1,
-                        pl: 3.6, // thụt vào cho thẳng hàng icon phía trên
-                      }}
-                    >
-                      {shortenText(res.rawText || "")}
-                    </Typography>
-
-                    {/* Nút Toggle sources */}
-                    {res.sources && res.sources.length > 0 && (
+                return (
+                  <Card
+                    key={res.id}
+                    sx={{
+                      mb: 2,
+                      background: "rgba(255,255,255,0.06)", // Glass base
+                      backdropFilter: "blur(10px)",
+                      WebkitBackdropFilter: "blur(10px)",
+                      border: "1px solid",
+                      borderColor: config.border, // Màu viền theo loại
+                      borderRadius: "16px",
+                      boxShadow: "0 4px 24px -1px rgba(0,0,0,0.1)",
+                      transition: "all 0.2s ease",
+                      "&:hover": {
+                        transform: "translateY(-2px)",
+                        boxShadow: "0 8px 30px -2px rgba(0,0,0,0.15)",
+                        borderColor: config.color,
+                      },
+                    }}
+                  >
+                    <CardContent sx={{ p: "16px !important" }}>
+                      {/* --- ROW 1: Icon + Message | Index --- */}
                       <Box
                         sx={{
                           display: "flex",
-                          justifyContent: "flex-end",
+                          justifyContent: "space-between", // Để đẩy số thứ tự sang phải
                           alignItems: "center",
+                          mb: 1.5,
+                          pb: 1,
+                          borderBottom: `1px solid ${config.border}`, // Line ngăn cách nhẹ
                         }}
                       >
-                        <Button
-                          size="small"
-                          onClick={() =>
-                            setResults((prev) =>
-                              prev.map((item) =>
-                                item.id === res.id
-                                  ? { ...item, expanded: !item.expanded }
-                                  : item
-                              )
-                            )
-                          }
-                          sx={{
-                            textTransform: "none",
-                            fontSize: "0.75rem",
-                            opacity: 0.8,
-                          }}
+                        {/* Left: Icon & Message */}
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
                         >
-                          {res.expanded ? "Hide sources ▲" : "Show sources ▼"}
-                        </Button>
-                      </Box>
-                    )}
-
-                    {/* Hàng 3: List nguồn đối chứng */}
-                    {res.expanded && (
-                      <Box
-                        sx={{
-                          mt: 1,
-                          pl: 4,
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: 0.7,
-                        }}
-                      >
-                        {res.sources?.map((src, i) => (
+                          {config.icon}
                           <Typography
-                            key={i}
-                            variant="body2"
+                            variant="subtitle2"
                             sx={{
+                              color: config.color,
+                              fontWeight: 700,
+                              textTransform: "uppercase",
                               fontSize: "0.75rem",
-                              opacity: 0.9,
+                              letterSpacing: "0.5px",
                             }}
                           >
-                            • {src}
+                            {res.displayMessage}
                           </Typography>
-                        ))}
+                        </Box>
+
+                        {/* Right: Index Number */}
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: "text.disabled",
+                            fontWeight: 600,
+                            fontFamily: "monospace",
+                            fontSize: "0.85rem",
+                          }}
+                        >
+                          #{String(index + 1).padStart(2, "0")}
+                        </Typography>
                       </Box>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
+
+                      {/* --- ROW 2: Sentence (New Note Sentence) --- */}
+                      <Typography
+                        variant="body1"
+                        sx={{
+                          color: "text.primary",
+                          fontWeight: 500,
+                          fontSize: "0.95rem",
+                          mb: 1,
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        "{res.sentence}"
+                      </Typography>
+
+                      {/* --- ROW 3: Reason / Missing Context --- */}
+                      <Box sx={{ mb: 1, display: "flex", gap: 1 }}>
+                        <Typography
+                          component="span"
+                          variant="caption"
+                          sx={{
+                            color: "text.secondary",
+                            fontWeight: 700,
+                            minWidth: "60px",
+                          }}
+                        >
+                          Analysis:
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                        >
+                          {res.reason}
+                        </Typography>
+                      </Box>
+
+                      {/* --- ROW 4: Suggested Rewrite / Addition --- */}
+                      <Box
+                        sx={{
+                          mb: 1,
+                          display: "flex",
+                          gap: 1,
+                          p: 1,
+                          borderRadius: "8px",
+                          bgcolor: "rgba(255,255,255,0.03)", // Highlight nhẹ phần suggest
+                          border: "1px dashed rgba(255,255,255,0.15)",
+                        }}
+                      >
+                        <Typography
+                          component="span"
+                          variant="caption"
+                          sx={{
+                            color: "#4caf50", // Xanh lá cho suggestion
+                            fontWeight: 700,
+                            minWidth: "60px",
+                            pt: 0.2,
+                          }}
+                        >
+                          Suggest:
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: "text.primary",
+                            fontSize: "0.875rem",
+                            fontStyle: "italic",
+                          }}
+                        >
+                          {res.suggestion}
+                        </Typography>
+                      </Box>
+
+                      {/* --- Expandable Sources Toggle (Chỉ hiện nếu có sources) --- */}
+                      {res.sources && res.sources.length > 0 && (
+                        <>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              justifyContent: "flex-end",
+                              mt: 1,
+                            }}
+                          >
+                            <Button
+                              size="small"
+                              onClick={() => toggleExpand(res.id)}
+                              startIcon={
+                                res.expanded ? (
+                                  <ExpandLessIcon />
+                                ) : (
+                                  <ExpandMoreIcon />
+                                )
+                              }
+                              sx={{
+                                textTransform: "none",
+                                fontSize: "0.75rem",
+                                color: "text.secondary",
+                                minWidth: 0,
+                                p: "2px 8px",
+                              }}
+                            >
+                              {res.expanded ? "Hide Evidence" : "View Evidence"}
+                            </Button>
+                          </Box>
+
+                          {res.expanded && (
+                            <Box
+                              sx={{
+                                mt: 1,
+                                p: 1.5,
+                                borderRadius: "8px",
+                                bgcolor: "rgba(0,0,0,0.2)",
+                              }}
+                            >
+                              {res.sources.map((src, i) => (
+                                <Typography
+                                  key={i}
+                                  variant="caption"
+                                  sx={{
+                                    display: "block",
+                                    color: "text.secondary",
+                                    fontFamily: "monospace",
+                                    mb: 0.5,
+                                    "&:last-child": { mb: 0 },
+                                  }}
+                                >
+                                  • {src}
+                                </Typography>
+                              ))}
+                            </Box>
+                          )}
+                        </>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </Box>
           </Box>
         </Box>

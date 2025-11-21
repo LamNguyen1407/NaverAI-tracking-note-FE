@@ -26,36 +26,46 @@ function App() {
 
   useEffect(() => {
     async function load() {
-        try{
-            setIsLoading(true);
+      try {
+        setIsLoading(true);
 
-            const metadataRes = await fetch(`${process.env.NEXT_PUBLIC_API}/files/metadata/note/${etag}`);
-            const metadataData = await metadataRes.json();
+        const metadataRes = await fetch(
+          `${process.env.NEXT_PUBLIC_API}/files/metadata/note/${etag}`
+        );
+        const metadataData = await metadataRes.json();
 
-            const contentRes = await fetch(metadataData.preview_url);
-            const contentText = await contentRes.text();
+        const contentRes = await fetch(metadataData.preview_url);
+        const contentText = await contentRes.text();
 
-            setMetadata(metadataData);
-            setContent(contentText);
-        }catch(e){
-            console.error("Failed to load content or metadata", e);
-            toast.error("Failed to load content or metadata");
-        }finally{
-            setIsLoading(false);
-        }
+        setMetadata(metadataData);
+        setContent(contentText);
+      } catch (e) {
+        console.error("Failed to load content or metadata", e);
+        toast.error("Failed to load content or metadata");
+      } finally {
+        setIsLoading(false);
+      }
     }
 
     load();
   }, [etag]);
 
-    if (isLoading || !metadata) {
-        return (
-        <Box sx={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "white" }}>
-            Loading content...
-        </Box>
-        );
-    }
-  
+  if (isLoading || !metadata) {
+    return (
+      <Box
+        sx={{
+          height: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "white",
+        }}
+      >
+        Loading content...
+      </Box>
+    );
+  }
+
   return (
     <Box
       sx={{

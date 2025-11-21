@@ -7,7 +7,8 @@ import Sidebar from "@/components/Editor/Sidebar";
 import Toolbar from "@/components/Editor/Toolbar";
 import TextEditor from "@/components/Editor/TextEditor/TextEditor";
 import { useSidebar } from "@/context/SidebarContext";
-import { useSearchParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
+import { toast } from "react-toastify";
 // URL của ảnh nền chính (giả sử đặt trong /public)
 const MAIN_BG_URL = "/assets/sea9.png";
 const MENU_ICON_URL = "/assets/starfish.png";
@@ -15,7 +16,46 @@ const MENU_ICON_URL = "/assets/starfish.png";
 function App() {
   const { toggleSidebar } = useSidebar();
 
- 
+  const params = useParams();
+  // ensure etag is a single string (useParams may return string | string[] | undefined)
+  const etagParam = (params as any)?.etag;
+  const etag = Array.isArray(etagParam) ? etagParam[0] : etagParam;
+  const [content, setContent] = useState("");
+  const [metadata, setMetadata] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+        try{
+            setIsLoading(true);
+
+            const metadataRes = await fetch(`${process.env.NEXT_PUBLIC_API}/files/metadata/note/${etag}`);
+            const metadataData = await metadataRes.json();
+
+            const contentRes = await fetch(metadataData.preview_url);
+            const contentText = await contentRes.text();
+
+            setMetadata(metadataData);
+            setContent(contentText);
+        }catch(e){
+            console.error("Failed to load content or metadata", e);
+            toast.error("Failed to load content or metadata");
+        }finally{
+            setIsLoading(false);
+        }
+    }
+
+    load();
+  }, [etag]);
+
+    if (isLoading || !metadata) {
+        return (
+        <Box sx={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "white" }}>
+            Loading content...
+        </Box>
+        );
+    }
+  
   return (
     <Box
       sx={{
@@ -80,7 +120,7 @@ function App() {
           height: "100vh",
         }}
       >
-        {/* <TextEditor content={content} /> */}
+        <TextEditor content={content} />
         {/* <Toolbar /> */}
       </Box>
     </Box>

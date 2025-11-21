@@ -11,12 +11,10 @@ import ReactMarkdown from "react-markdown";
 import { renderAsync } from "docx-preview";
 import DocumentList from "@/components/File/DocumentList";
 import NoteList from "@/components/File/NoteList";
+import { useFileStore } from "@/stores/fileStore";
 
 const MENU_ICON_URL = "/assets/starfish.png";
 const MAIN_BG_URL = "/assets/files5.png";
-
-//cached note , document data
-let cachedMetadata: { notes: any[]; docs: any[] } | null = null;
 
 // mockData để giả lập API
 // const mockData = {
@@ -74,6 +72,8 @@ function MarkdownPreview({ blob }: { blob: Blob }) {
 function Files() {
   const { toggleSidebar } = useSidebar();
 
+  const reloadFlag = useFileStore((state) => state.reloadFlag);
+
 
   // const handleOpen = async (file: any) => {
   //   setSelectedFile(file);
@@ -127,12 +127,8 @@ useEffect(() => {
   useEffect(() => {
   const fetchFiles = async () => {
     try {
-      // Kiểm tra cache trước
-      if (cachedMetadata) {
-        setNotes(cachedMetadata.notes);
-        setDocuments(cachedMetadata.docs);
-        return;
-      }
+      //lay note va document tu cached
+
       // Lấy Note và Document
       const [noteRes, docRes] = await Promise.all([
         fetch(`${process.env.NEXT_PUBLIC_API}/files/metadata/note`),
@@ -143,8 +139,6 @@ useEffect(() => {
         noteRes.json(),
         docRes.json(),
       ]);
-      // Lưu vào cache
-      cachedMetadata = { notes: noteData.files, docs: docData.files };
 
       // Cập nhật state
       setNotes(noteData.files);
@@ -156,7 +150,7 @@ useEffect(() => {
   };
 
   fetchFiles();
-}, []);
+}, [reloadFlag]);
 
   return (
     <Box

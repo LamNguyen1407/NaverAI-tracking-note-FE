@@ -1,256 +1,278 @@
-// ParallaxThreePage.tsx
 "use client";
 
-import { useState } from "react";
 import { Box } from "@mui/material";
-import { GlassCard } from "@developer-hub/liquid-glass";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 
-// Ảnh nền trong thư mục /public/assets/
+// Swiper.js
+import { Swiper, SwiperSlide } from "swiper/react";
+import { EffectCoverflow, Pagination, Navigation } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/effect-coverflow";
+import "swiper/css/pagination";
+import "swiper/css/navigation";
+import { GlassCard } from "@developer-hub/liquid-glass";
+
+// ===== MOCK DATA =====
+import DescriptionIcon from "@mui/icons-material/Description";
+import FactCheckIcon from "@mui/icons-material/FactCheck";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+
+const cloudLeft = "/assets/cloud_left.png";
+const cloudRight = "/assets/cloud_right.png";
+const island = "/assets/island4.png";
+
+const FEATURE_CARDS = [
+  {
+    id: 1,
+    icon: <DescriptionIcon fontSize="large" className="text-[#FFD28A]" />,
+    title: "One workspace for AI, search, and structured notes",
+    p1: "No more switching between ChatGPT, Gemini, Grok, and browser tabs. Everything you need sits in one unified space.",
+    p2: "Search across your own documents and take clean, structured notes directly in context.",
+    glow: "shadow-[0_0_40px_rgba(255,255,255,0.15)]",
+  },
+  {
+    id: 2,
+    icon: <FactCheckIcon fontSize="large" className="text-[#80E9FF]" />,
+    title: "Verify the web with a single highlight",
+    p1: "Select any passage online, choose the sources you trust, and run an instant verification check.",
+    p2: "We reveal conflicts, alignments, and missing information—right when you need it.",
+    glow: "shadow-[0_0_40px_rgba(0,200,255,0.20)]",
+  },
+  {
+    id: 3,
+    icon: <AutoAwesomeIcon fontSize="large" className="text-[#FFB6FF]" />,
+    title: "Auto-structured summaries for your content",
+    p1: "Drop in PDFs, articles, or long notes and get a clean, consistent summary without manual cleanup.",
+    p2: "Important insights, decisions, and follow-ups are extracted automatically.",
+    glow: "shadow-[0_0_40px_rgba(255,150,255,0.25)]",
+  },
+];
+
 const bg1 = "/assets/hero_section4.png";
 const ship = "/assets/ship.png";
 
 export default function ParallaxThreePage() {
-  const [showCard, setShowCard] = useState(true);
   const router = useRouter();
-
-  // Hàm xử lý việc chuyển hướng
-  const handleLogin = () => {
-    router.push("/login");
-  };
+  const handleLogin = () => router.push("/login");
 
   return (
     <Box className="text-white overflow-x-hidden">
-      {/* ===== MAIN CONTENT ===== */}
       <div className="relative h-screen flex items-center justify-center bg-black overflow-hidden">
-        {/* Background tĩnh */}
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage: `url(${bg1})`,
-            mixBlendMode: "screen",
-            filter: "blur(3px)",
-          }}
-        />
+        {/* ===== BACKGROUND ===== */}
+        {/* ===== BACKGROUND (island reveal) ===== */}
+        <div className="absolute inset-0 overflow-hidden">
+          {/* Island background (ở dưới cùng) */}
+          <motion.div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: `url(${island})` }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1.2, delay: 0.6 }}
+          />
 
-        {/* <video
-          className="absolute top-0 left-0 w-full h-full object-cover"
-          src="/assets/wave2.mp4" // đặt video trong public/videos
-          autoPlay
-          loop
-          muted
-          playsInline
-        /> */}
-
-        <div className="relative w-[70%] h-full select-none">
-          {/* NAVER */}
-          <h1
-            className="absolute font-serif leading-none"
+          {/* Cloud Left */}
+          {/* Cloud Left */}
+          <motion.div
+            className="absolute top-0 left-0 h-full w-[120%] object-cover"
             style={{
-              top: "8%",
-              left: "8%",
-              fontSize: "9rem",
-              fontWeight: 800,
-              color: "#FF8A3D",
-              lineHeight: 1,
-              fontFamily: "var(--font-wkwk), sans-serif",
+              WebkitMaskImage: `url(${cloudLeft})`,
+              maskImage: `url(${cloudLeft})`,
+              WebkitMaskSize: "cover",
+              maskSize: "cover",
+              backgroundImage: `url(${cloudLeft})`,
+              backgroundSize: "cover",
             }}
-          >
-            NAVER
-          </h1>
+            initial={{ x: 0 }}
+            animate={{ x: "-120%" }}
+            transition={{ duration: 2, ease: "easeOut", delay: 1 }}
+          />
 
-          {/* NOTE */}
-          <h1
-            className="absolute font-bold leading-none"
+          {/* Cloud Right */}
+          {/* Cloud Right */}
+          <motion.div
+            className="absolute top-0 right-0 h-full w-[120%] object-cover"
             style={{
-              top: "30%",
-              right: "10%",
-              fontSize: "11rem",
-              fontWeight: 900,
-              color: "#FFC107",
-              letterSpacing: "-6px",
-              lineHeight: 1,
-              // transform: "rotate(-4deg)",
-              textShadow: "3px 3px 10px rgba(0,0,0,0.25)",
-              fontFamily: "var(--font-super-maples), sans-serif",
+              WebkitMaskImage: `url(${cloudRight})`,
+              maskImage: `url(${cloudRight})`,
+              WebkitMaskSize: "cover",
+              maskSize: "cover",
+              backgroundImage: `url(${cloudRight})`,
+              backgroundSize: "cover",
             }}
-          >
-            ReWrySe
-          </h1>
-
-          {/* Con thuyền */}
-          <div
-            className="absolute flex items-end"
-            style={{
-              bottom: "2%",
-              left: "15%",
-            }}
-          >
-            <div className="relative">
-              <img
-                src={ship}
-                alt="ship"
-                className="w-[600px] h-auto object-cover"
-              />
-
-              {/* Text START */}
-              <span
-                className="absolute text-5xl font-extrabold"
-                style={{
-                  left: "58%",
-                  bottom: "35%",
-                  transform: "translateX(-50%)",
-                  color: "black",
-                  textShadow:
-                    "0 0 8px #FF99FF, 0 0 15px #1ABC9C, 0 0 25px rgba(255,255,255,0.8)",
-                  pointerEvents: "none", // để text không ảnh hưởng click
-                }}
-              >
-                START
-              </span>
-
-              {/* Invisible Button */}
-              <button
-                onClick={handleLogin}
-                className="absolute"
-                style={{
-                  left: "58%",
-                  bottom: "35%",
-                  transform: "translateX(-50%)",
-                  width: "180px",
-                  height: "50px",
-                  background: "transparent",
-                  border: "3px solid #FFB38A", // chỉ shape viền
-                  borderRadius: "12px",
-                  cursor: "pointer",
-                }}
-              />
-            </div>
-          </div>
+            initial={{ x: 0 }}
+            animate={{ x: "120%" }}
+            transition={{ duration: 2, ease: "easeOut", delay: 2 }}
+          />
         </div>
 
-        {/* ==== GLASS CARD NOTE==== */}
-        <motion.div
-          drag
-          dragMomentum={false}
-          dragElastic={0.2}
-          whileTap={{ cursor: "grabbing" }}
-          initial={{ x: 1000, y: "-50%" }}
-          animate={showCard ? { x: "85%", y: "-75%" } : {}}
-          transition={{ duration: 3, ease: "easeInOut" }}
-          style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            cursor: "grab",
-            zIndex: 10,
-          }}
-        >
-          <GlassCard blurAmount={0} cornerRadius={100} shadowMode={false}>
-            <div className="h-60 w-60 relative">
-              <img
-                src="/assets/bubble2.png"
-                alt="Bubble"
-                className="object-cover w-full h-full"
-                draggable={false}
-              />
-            </div>
-          </GlassCard>
-        </motion.div>
+        {/* ===== MAIN CONTENT (FLEX) ===== */}
+        <div className="relative w-[80%] h-full flex items-center justify-between select-none">
+          {/* ========================= */}
+          {/*     SLIDER LEFT (65%)     */}
+          {/* ========================= */}
+          <div className="w-[65%]">
+            <Swiper
+              modules={[EffectCoverflow, Pagination, Navigation]}
+              effect="coverflow"
+              grabCursor={true}
+              centeredSlides={true}
+              slidesPerView={2}
+              // spaceBetween={5}
+              coverflowEffect={{
+                rotate: 0,
+                stretch: 20,
+                depth: 200,
+                modifier: 2,
+                slideShadows: false,
+              }}
+              pagination={{ clickable: true }}
+              navigation={true} // giữ logic navigation, chỉ ẩn icon UI
+              className="w-full h-[340px] relative"
+            >
+              {FEATURE_CARDS.map((item) => (
+                <SwiperSlide key={item.id} className="flex justify-center">
+                  <GlassCard>
+                    <div
+                      className={`
+      w-[320px] min-h-[260px]
+      rounded-2xl
+      p-6 flex flex-col
+      backdrop-blur-xl bg-white/10 border border-white/18 
+      ${item.glow}
+    `}
+                      style={{ WebkitBackdropFilter: "blur(20px)" }}
+                    >
+                      <div className="mb-3">{item.icon}</div>
 
-        {/* ==== GLASS CARD START==== */}
-        <motion.div
-          drag
-          dragMomentum={false}
-          dragElastic={0.2}
-          whileTap={{ cursor: "grabbing" }}
-          initial={{ x: "-60%", y: 1000 }}
-          animate={
-            showCard
-              ? {
-                  x: "-150%",
-                  y: "30%",
-                  transition: { duration: 3, ease: "easeInOut" },
-                }
-              : {}
-          }
-          whileInView={{
-            borderRadius: [
-              "70% 30% 80% 20% / 60% 40% 70% 30%",
-              "35% 65% 25% 75% / 65% 35% 75% 25%",
-              "80% 20% 60% 40% / 55% 75% 25% 45%",
-              "60% 40% 70% 30% / 50% 60% 40% 50%",
-            ],
-            scale: [0.96, 1.06, 1],
-            transition: {
-              duration: 7,
-              ease: "easeInOut",
-              repeat: Infinity,
-              repeatType: "mirror",
-            },
-          }}
-          style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            cursor: "grab",
-            zIndex: 10,
-            overflow: "hidden",
-          }}
-        >
-          <GlassCard blurAmount={0} cornerRadius={100} shadowMode={false}>
-            <div className="h-60 w-60 relative">
-              {/* <img
-                src="/assets/bubble2.png"
-                alt="Bubble"
-                className="object-cover w-full h-full"
-                draggable={false}
-              /> */}
-            </div>
-          </GlassCard>
-        </motion.div>
+                      <h2 className="text-lg font-semibold mb-3">
+                        {item.title}
+                      </h2>
 
-        {/* ==== GLASS CARD NAVER==== */}
-        <motion.div
-          drag
-          dragMomentum={false}
-          dragElastic={0.2}
-          whileTap={{ cursor: "grabbing" }}
-          initial={{ x: -1000, y: -800 }}
-          animate={
-            showCard
-              ? {
-                  x: "-270%",
-                  y: "-200%",
-                  transition: { duration: 2, ease: "easeInOut" },
-                }
-              : {}
-          }
-          style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            cursor: "grab",
-            zIndex: 10,
+                      <p className="text-sm opacity-85 leading-relaxed mb-2">
+                        {item.p1}
+                      </p>
 
-            borderRadius: "58% 42% 55% 45% / 50% 60% 40% 50%",
-            overflow: "hidden", // ⭐ Rất quan trọng để cắt ảnh theo shape
-          }}
-        >
-          <GlassCard blurAmount={0} cornerRadius={100} shadowMode={false}>
-            <div className="h-40 w-40 relative">
-              <img
-                src="/assets/sun3.png"
-                alt="Bubble"
-                className="object-cover w-full h-full"
-                draggable={false}
-              />
+                      <p className="text-sm opacity-80 leading-relaxed">
+                        {item.p2}
+                      </p>
+                    </div>
+                  </GlassCard>
+                </SwiperSlide>
+              ))}
+            </Swiper>
+
+            {/* Ẩn icon mũi tên trái/phải của Swiper */}
+            <style>{`
+              .swiper-button-next,
+              .swiper-button-prev {
+                display: none !important;
+              }
+              .swiper-slide {
+                opacity: 0.35;
+                transition: opacity .3s ease;
+              }
+
+              .swiper-slide-active {
+                opacity: 1 !important;
+              }
+
+            `}</style>
+          </div>
+
+          {/* ========================= */}
+          {/*   HERO TEXT RIGHT (35%)   */}
+          {/* ========================= */}
+          <motion.div
+            initial={{ opacity: 0, x: 40 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 1 }}
+            className="w-[30%] text-right"
+          >
+            <div className="flex flex-col justify-between gap-10">
+              <>
+                <div className="relative w-full h-full select-none">
+                  {/* NAVER - chữ trên bên trái */}
+                  <h1
+                    className="w-full mr-[150px] text-center font-serif leading-none"
+                    style={{
+                      fontSize: "5rem",
+                      fontWeight: 800,
+                      color: "#FF8A3D",
+                      lineHeight: 1,
+                      fontFamily: "var(--font-super-maples), sans-serif",
+                    }}
+                  >
+                    NAVER
+                  </h1>
+
+                  {/* Noveri - chữ dưới bên phải */}
+                  <h1
+                    className="text-center ml-[100px] font-bold leading-none"
+                    style={{
+                      fontSize: "7rem",
+                      fontWeight: 900,
+                      color: "#FFC107",
+                      letterSpacing: "-6px",
+                      lineHeight: 1,
+                      textShadow: "3px 3px 10px rgba(0,0,0,0.25)",
+                      fontFamily: "var(--font-super-maples), sans-serif",
+                    }}
+                  >
+                    Noveri
+                  </h1>
+                </div>
+
+                <p className="text-lg mt-4 opacity-80">
+                  A unified space to think, verify, and store what actually
+                  matters. Built for long-term knowledge, not just one-off
+                  answers.
+                </p>
+              </>
+
+              <div>
+                <div className="relative">
+                  <img
+                    src={ship}
+                    alt="ship"
+                    className="w-[520px] h-auto object-cover"
+                  />
+
+                  <span
+                    className="absolute text-4xl font-extrabold"
+                    style={{
+                      left: "55%",
+                      bottom: "15%",
+                      transform: "translateX(-50%)",
+                      color: "black",
+                      textShadow:
+                        "0 0 8px #FF99FF, 0 0 15px #1ABC9C, 0 0 25px rgba(255,255,255,0.8)",
+                      pointerEvents: "none",
+                    }}
+                  >
+                    START
+                  </span>
+
+                  <button
+                    onClick={handleLogin}
+                    className="absolute"
+                    style={{
+                      left: "55%",
+                      bottom: "13%",
+                      transform: "translateX(-50%)",
+                      width: "150px",
+                      height: "50px",
+                      background: "transparent",
+                      border: "3px solid #FFB38A",
+                      borderRadius: "12px",
+                      cursor: "pointer",
+                    }}
+                  />
+                </div>
+              </div>
             </div>
-          </GlassCard>
-        </motion.div>
+          </motion.div>
+        </div>
       </div>
     </Box>
   );

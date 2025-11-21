@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 // Import UI Components
 import {
   Box,
@@ -11,11 +11,17 @@ import {
   CircularProgress,
   Chip,
   IconButton,
+  Paper,
+  TextField,
+  List,
+  ListItem,
+  ListItemButton,
+  Checkbox,
+  ListItemIcon,
+  ListItemText,
 } from "@mui/material";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-import CloseIcon from "@mui/icons-material/Close";
+
 import SmartToyIcon from "@mui/icons-material/SmartToy";
-import MenuOpenIcon from "@mui/icons-material/MenuOpen";
 
 import WarningAmberIcon from "@mui/icons-material/WarningAmber"; // Conflict
 import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh"; // Improvement
@@ -23,6 +29,15 @@ import PsychologyAltIcon from "@mui/icons-material/PsychologyAlt"; // Hallucinat
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 
+import {
+  CheckCircleOutline as CheckCircleOutlineIcon,
+  MenuOpen as MenuOpenIcon,
+  Save as SaveIcon,
+  Source as SourceIcon,
+  Search as SearchIcon,
+  Close as CloseIcon,
+} from "@mui/icons-material";
+import { toast } from "react-toastify"; // Import toastify
 // --- 1. Types definitions based on New JSON ---
 
 interface ConflictItem {
@@ -113,8 +128,9 @@ interface VerificationResult {
 }
 
 const TextEditor = ({ content }: any) => {
-  const [markdown, setMarkdown] = useState(initialMarkdown);
+  const [markdown, setMarkdown] = useState(content || initialMarkdown);
   const [showSidebar, setShowSidebar] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleEditorChange = (newMarkdown: string) => {
     setMarkdown(newMarkdown);
@@ -122,6 +138,80 @@ const TextEditor = ({ content }: any) => {
 
   const [results, setResults] = useState<UnifiedResultItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [showSourceMenu, setShowSourceMenu] = useState(false);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [allSources, setAllSources] = useState([
+    { id: "1", name: "Lecture_History.pdf" },
+    { id: "2", name: "Augustus_Bio.docx" },
+
+    { id: "4", name: "Data mining.pdf" },
+    { id: "5", name: "Machine learning.docx" },
+    { id: "6", name: "Computer vision.txt" },
+
+    { id: "7", name: "Quantum_Physics_Intro.pdf" },
+    { id: "8", name: "Roman_Empire_Trade_Routes.docx" },
+    { id: "9", name: "NeuralNetworks_Notes.txt" },
+    { id: "10", name: "Algorithms_Design.pdf" },
+    { id: "11", name: "Blockchain_Fundamentals.docx" },
+    { id: "12", name: "Genetics_and_Evolution.pdf" },
+
+    { id: "14", name: "CyberSecurity_Checklist.txt" },
+    { id: "15", name: "Deep_Learning_Course.pdf" },
+    { id: "16", name: "Database_Systems_Overview.docx" },
+    { id: "17", name: "OperatingSystems_Notes.txt" },
+    { id: "18", name: "Medieval_Warfare.pdf" },
+
+    { id: "20", name: "Linear_Algebra_Summary.pdf" },
+    { id: "21", name: "Human_Anatomy_Ref.docx" },
+    { id: "22", name: "Astronomy_Stars_and_Galaxies.pdf" },
+    { id: "23", name: "Environmental_Science_Intro.docx" },
+    { id: "24", name: "Ethics_in_AI.txt" },
+    { id: "25", name: "Compiler_Design.pdf" },
+
+    { id: "27", name: "Probability_Theory_Basics.pdf" },
+    { id: "28", name: "Sociology_HumanBehavior.docx" },
+    { id: "29", name: "Philosophy_Stoicism_Notes.txt" },
+    { id: "30", name: "Renaissance_Art_History.pdf" },
+  ]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  const handleToggleSource = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  };
+
+  const filteredSources = allSources.filter((s) =>
+    s.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Mock data lịch sử cũ (hoặc gọi API lấy history tại đây)
+  useEffect(() => {
+    const fetchHistory = async () => {
+      // Giả lập delay lấy data từ server về
+      // const response = await api.getHistory();
+
+      // Mock data cũ
+      const oldHistory: UnifiedResultItem[] = [
+        {
+          id: "old-1",
+          type: "conflict",
+          displayMessage: "Detected Contradiction",
+          sentence: "Lịch sử cũ: Caesar chết già.",
+          reason: "Lịch sử ghi nhận Caesar bị ám sát.",
+          suggestion: "Caesar bị ám sát tại Pompey Theatre.",
+          sources: ["Sách Lịch sử La Mã"],
+          expanded: false,
+        },
+      ];
+
+      // Set vào state ban đầu
+      setResults(oldHistory);
+    };
+
+    fetchHistory();
+  }, []); // Chạy 1 lần khi mount
 
   const simulateApiCall = ({ selectedText }: any) => {
     setLoading(true);
@@ -304,8 +394,63 @@ const TextEditor = ({ content }: any) => {
     }
   };
 
+  const handleSave = async () => {
+    setIsSaving(true);
+    setTimeout(() => {
+      setIsSaving(false);
+      toast.success("Saved!");
+    }, 1500);
+  };
+
   return (
     <Box>
+      {/* Chips List */}
+      <Box
+        className="w-full max-w-[70vw] mb-[10px] flex gap-0.5"
+        sx={{
+          overflowX: "auto",
+          overflowY: "hidden",
+          whiteSpace: "nowrap",
+          background: "transparent",
+          border: "none",
+          boxShadow: "none",
+          scrollbarWidth: "thin", // Firefox
+          "&::-webkit-scrollbar": {
+            height: 6, // thanh scroll nhỏ
+            width: "6px",
+          },
+          "&::-webkit-scrollbar-track": {
+            background: "transparent", // trong suốt
+          },
+          "&::-webkit-scrollbar-thumb": {
+            background: "transparent",
+            borderRadius: "3px",
+          },
+          "&::-webkit-scrollbar-thumb:hover": {
+            background: "rgba(0,0,0,0.8)",
+          },
+          scrollbarColor: "rgba(0,0,0,0.5) transparent",
+        }}
+      >
+        {selectedIds.map((id) => {
+          const file = allSources.find((s) => s.id === id);
+          return file ? (
+            <Chip
+              key={id}
+              label={file.name}
+              size="small"
+              onDelete={() => handleToggleSource(id)}
+              sx={{
+                backdropFilter: "blur(4px)",
+                background: "rgba(255, 255, 255, 0.7)",
+                "& .MuiChip-deleteIcon:hover": { color: "error.main" },
+                display: "inline-flex",
+              }}
+            />
+          ) : null;
+        })}
+      </Box>
+
       <Box
         sx={{
           background:
@@ -340,44 +485,167 @@ const TextEditor = ({ content }: any) => {
               right: 15,
               zIndex: 100,
               display: "flex",
+              justifyContent: "space-between",
+              width: "100%",
               gap: 1,
             }}
           >
-            {/* Nút Check Selection cũ giữ nguyên ở đây */}
             <Button
               variant="contained"
               size="small"
-              onClick={handleCheckSelection}
-              startIcon={<CheckCircleOutlineIcon />}
+              onClick={handleSave}
+              disabled={isSaving}
+              startIcon={!isSaving && <SaveIcon />}
               sx={{
                 textTransform: "none",
                 fontWeight: "bold",
-                backdropFilter: "blur(4px)",
-                background: "rgba(25, 118, 210, 0.9)",
-                boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
-                borderRadius: "15px",
+                // backdropFilter: "blur(4px)",
+                borderRadius: "12px",
+                // bgcolor: isSaving ? "rgba(0,0,0)" : "primary.main",
+                color: "white",
+                // boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
                 "&:hover": {
-                  background: "rgba(21, 101, 192, 1)",
+                  background: isSaving
+                    ? "rgba(0,0,0,0.1)"
+                    : "rgba(21, 101, 192, 1)",
+                },
+                ml: "50px",
+                "&.Mui-disabled": {
+                  color: "white",
+                  opacity: 0.7, // bạn có thể chỉnh mức mờ
                 },
               }}
             >
-              Check Selection
+              {isSaving ? "saving..." : "Save"}
             </Button>
 
-            {/* --- THÊM NÚT TOGGLE SIDEBAR TẠI ĐÂY --- */}
-            <IconButton
-              onClick={() => setShowSidebar(!showSidebar)}
-              sx={{
-                background: "rgba(255,255,255,0.5)",
-                backdropFilter: "blur(4px)",
-                transform: showSidebar ? "rotate(180deg)" : "rotate(0deg)",
-                transition: "0.3s",
-                height: 30,
-                width: 30,
-              }}
-            >
-              <MenuOpenIcon />
-            </IconButton>
+            {/* Nút Check Selection cũ giữ nguyên ở đây */}
+            <div className="flex gap-3">
+              <Button
+                variant="contained"
+                size="small"
+                onClick={() => setShowSourceMenu(!showSourceMenu)}
+                startIcon={<SourceIcon />}
+                sx={{
+                  textTransform: "none",
+                  fontWeight: "bold",
+                  backdropFilter: "blur(4px)",
+                  borderRadius: "12px",
+                  bgcolor: showSourceMenu
+                    ? "rgba(21, 101, 192, 1)"
+                    : "primary.main",
+                  boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+                }}
+              >
+                Select sources
+              </Button>
+              {showSourceMenu && (
+                <Paper
+                  sx={{
+                    position: "absolute",
+                    top: "115%",
+                    right: 0,
+                    width: 280,
+                    maxHeight: 350,
+                    // overflow: "hidden",
+                    borderRadius: "12px",
+                    zIndex: 999,
+                    background: "rgba(255, 255, 255, 0.95)",
+                    backdropFilter: "blur(10px)",
+                    display: "flex",
+                    flexDirection: "column",
+                    boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
+                  }}
+                >
+                  <Box sx={{ p: 1 }}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      placeholder="Search..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </Box>
+                  <List
+                    sx={{
+                      overflowY: "auto",
+                      overflowX: "hidden",
+                      flex: 1,
+                      p: 0,
+                      "&::-webkit-scrollbar": {
+                        width: "6px",
+                      },
+                      "&::-webkit-scrollbar-thumb": {
+                        background: "rgba(0,0,0,0.5)",
+                        borderRadius: "3px",
+                      },
+                      "&::-webkit-scrollbar-thumb:hover": {
+                        background: "rgba(0,0,0,0.8)",
+                      },
+                      "&::-webkit-scrollbar-track": {
+                        background: "transparent",
+                      },
+                      scrollbarWidth: "thin", // Firefox
+                      scrollbarColor: "rgba(0,0,0,0.5) transparent",
+                    }}
+                  >
+                    {filteredSources.map((s) => (
+                      <ListItem key={s.id} disablePadding dense>
+                        <ListItemButton
+                          onClick={() => handleToggleSource(s.id)}
+                        >
+                          <ListItemIcon sx={{ minWidth: 36 }}>
+                            <Checkbox
+                              edge="start"
+                              checked={selectedIds.includes(s.id)}
+                              size="small"
+                            />
+                          </ListItemIcon>
+
+                          <ListItemText primary={s.name} />
+                        </ListItemButton>
+                      </ListItem>
+                    ))}
+                  </List>
+                </Paper>
+              )}
+
+              {/* Nút Check Selection cũ giữ nguyên ở đây */}
+              <Button
+                variant="contained"
+                size="small"
+                onClick={handleCheckSelection}
+                startIcon={<CheckCircleOutlineIcon />}
+                sx={{
+                  textTransform: "none",
+                  fontWeight: "bold",
+                  backdropFilter: "blur(4px)",
+                  bgcolor: loading ? "warning.main" : "primary.main",
+                  boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+                  borderRadius: "15px",
+                  "&:hover": {
+                    background: "rgba(21, 101, 192, 1)",
+                  },
+                }}
+              >
+                {loading ? "processing..." : "Check Selection"}
+              </Button>
+
+              {/* --- THÊM NÚT TOGGLE SIDEBAR TẠI ĐÂY --- */}
+              <IconButton
+                onClick={() => setShowSidebar(!showSidebar)}
+                sx={{
+                  background: "rgba(255,255,255,0.5)",
+                  backdropFilter: "blur(4px)",
+                  transform: showSidebar ? "rotate(180deg)" : "rotate(0deg)",
+                  transition: "0.3s",
+                  height: 30,
+                  width: 30,
+                }}
+              >
+                <MenuOpenIcon />
+              </IconButton>
+            </div>
           </Box>
 
           <Box

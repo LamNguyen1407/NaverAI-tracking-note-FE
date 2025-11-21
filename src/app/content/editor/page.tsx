@@ -15,7 +15,6 @@ const MENU_ICON_URL = "/assets/starfish.png";
 function App() {
   const { toggleSidebar } = useSidebar();
 
- 
   return (
     <Box
       sx={{

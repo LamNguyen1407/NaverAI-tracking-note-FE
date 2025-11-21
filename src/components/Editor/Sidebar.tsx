@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Drawer,
   Box,
@@ -36,14 +36,27 @@ interface SidebarProps {
   current?: string;
 }
 
-const mockData: Record<string, string[]> = {
-  Note: ["Ghi chú 1", "Ghi chú 2", "Ghi chú 3", "Ghi chú 4"],
-  Files: ["File A", "File B", "File C"],
-  Chat: ["Chat 1", "Chat 2"],
-};
+interface FileMeta {
+  file_name: string;
+  size: number;
+  last_modified: string;
+  etag: string;
+  preview_url: string;
+}
+
+// const mockData: Record<string, string[]> = {
+//   Note: ["Ghi chú 1", "Ghi chú 2", "Ghi chú 3", "Ghi chú 4"],
+//   Files: ["File A", "File B", "File C"],
+//   Chat: ["Chat 1", "Chat 2"],
+// };
 
 const Sidebar: React.FC<SidebarProps> = ({ open, onClose, current }) => {
-  const [tab, setTab] = useState(current || "Note");
+
+
+  const [tab, setTab] = useState<"Note" | "Files" | "Chat">(current as "Note" | "Files" | "Chat" || "Note");
+  const [selectedNote, setSelectedNote] = useState<FileMeta | null>(null);
+  const [notes, setNotes] = useState<FileMeta[]>([]);
+  
 
   const router = useRouter();
   const pathname = usePathname();
@@ -51,6 +64,28 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, current }) => {
   const handleLogout = () => {
     router.push("/login");
   };
+
+  const handleClick = (file: FileMeta) => {
+    setSelectedNote(file);
+    router.push(`/content/editor/${file.etag}`);
+  }
+
+  useEffect(() => {
+    const fetchNotes = async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API}/files/metadata/note`
+        );
+        const json = await res.json();
+
+        setNotes(json.files); // ❗ lưu full metadata
+      } catch (e) {
+        console.error("Failed to fetch note metadata", e);
+      }
+    };
+
+    fetchNotes();
+  }, []);
 
   return (
     <Drawer
@@ -169,25 +204,28 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, current }) => {
             </Tabs>
 
             {/* Nội dung thay đổi theo tab */}
-            <List>
-              {mockData[tab].map((item, index) => (
-                <ListItemButton
-                  key={index}
-                  sx={{
-                    ...glassmorphismStyle,
-                    marginBottom: "10px",
-                    "&:hover": {
-                      backgroundColor: "rgba(67, 209, 255, 0.4)",
-                    },
-                    "&:hover .MuiListItemText-primary": {
-                      color: "black", // đổi màu chữ khi hover
-                    },
-                  }}
-                >
-                  <ListItemText primary={item} sx={{ color: "white" }} />
-                </ListItemButton>
-              ))}
-            </List>
+              {/* Note List */}
+                <List>
+                  {tab === "Note" && notes.map((item , index ) => (
+                    <ListItemButton
+                      className={selectedNote?.etag === item.etag ? "selected" : ""}
+                      onClick={() => handleClick(item)}
+                      key={index}
+                      sx={{
+                        ...glassmorphismStyle,
+                        marginBottom: "10px",
+                        "&:hover": {
+                          backgroundColor: "rgba(67, 209, 255, 0.4)",
+                        },
+                        "&:hover .MuiListItemText-primary": {
+                          color: "black", // đổi màu chữ khi hover
+                        },
+                      }}
+                    >
+                      <ListItemText primary={item.file_name} sx={{ color: "white" }} />
+                    </ListItemButton>
+                  ))}
+                </List>
           </Box>
 
           <Box

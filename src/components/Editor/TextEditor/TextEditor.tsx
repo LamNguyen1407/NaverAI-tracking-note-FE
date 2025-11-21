@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { use, useEffect, useState } from "react";
 // Import UI Components
 import {
   Box,
@@ -56,8 +56,14 @@ interface VerificationResult {
   expanded?: boolean; // state để toggle mở/đóng
 }
 
-const TextEditor = () => {
-  const [markdown, setMarkdown] = useState(initialMarkdown);
+interface TextEditorProps {
+  content: string;   // markdown từ file thật
+  fileName?: string; // tên file (hiển thị trong header nếu cần)
+}
+
+
+const TextEditor = ({content}: TextEditorProps) => {
+  const [markdown, setMarkdown] = useState(content);
   const [showSidebar, setShowSidebar] = useState(true);
   // State lưu danh sách kết quả Mock
   const [results, setResults] = useState<VerificationResult[]>([]);

@@ -19,7 +19,7 @@
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@hookform/resolvers": "^5.2.2",
-    "@mdxeditor/editor": "^3.48.0",
+    "@mdxeditor/editor": "^3.49.2",
     "@mui/icons-material": "^7.3.5",
     "@mui/material": "^7.3.5",
     "@tiptap/react": "^3.10.7",

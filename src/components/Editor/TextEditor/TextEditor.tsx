@@ -1,5 +1,6 @@
 "use client";
 
+// temp
 import { useState, useEffect } from "react";
 import { supabase } from "@/components/Utils/SupabaseClient";
 
@@ -142,7 +143,6 @@ export async function saveToSupabase(user_id: string, session_id: string) {
 }
 
 const TextEditor = ({ content }: any) => {
-
   const [markdown, setMarkdown] = useState(content || initialMarkdown);
 
   const [showSidebar, setShowSidebar] = useState(true);
@@ -150,7 +150,7 @@ const TextEditor = ({ content }: any) => {
 
   const [noteTitle, setNoteTitle] = useState("");
 
-  const {triggerReloadNote} = useFileStore()
+  const { triggerReloadNote } = useFileStore();
 
   const handleEditorChange = (newMarkdown: string) => {
     setMarkdown(newMarkdown);
@@ -587,51 +587,52 @@ const TextEditor = ({ content }: any) => {
 
   const handleSave = async () => {
     if (!noteTitle.trim()) {
-    toast.error("Please enter a title!");
-    return;
+      toast.error("Please enter a title!");
+      return;
     }
 
     setIsSaving(true);
 
-     try {
-    // ---- 1. Chuẩn bị file markdown để upload MinIO ----
-    const blob = new Blob([markdown], { type: "text/markdown" });
-    const file = new File([blob], `${noteTitle}.md`, { type: "text/markdown" });
+    try {
+      // ---- 1. Chuẩn bị file markdown để upload MinIO ----
+      const blob = new Blob([markdown], { type: "text/markdown" });
+      const file = new File([blob], `${noteTitle}.md`, {
+        type: "text/markdown",
+      });
 
-    const formData = new FormData();
-    formData.append("file", file);
+      const formData = new FormData();
+      formData.append("file", file);
 
-    // ---- 2. Tạo body request cho NotebookLM ----
-    const notebookPayload = {
-      title: noteTitle,
-      content: markdown,
-      note_type: "human"
-    };
+      // ---- 2. Tạo body request cho NotebookLM ----
+      const notebookPayload = {
+        title: noteTitle,
+        content: markdown,
+        note_type: "human",
+      };
 
-    // ---- 3. Chạy song song 2 API ----
-    await Promise.all([
-      fetch(`${process.env.NEXT_PUBLIC_API}/files/upload/note`, {
-        method: "POST",
-        body: formData,
-      }),
-      fetch(`${process.env.NEXT_PUBLIC_API_NOTEBOOK}/api/notes`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(notebookPayload),
-      }),
-    ]);
-    
-    triggerReloadNote();
+      // ---- 3. Chạy song song 2 API ----
+      await Promise.all([
+        fetch(`${process.env.NEXT_PUBLIC_API}/files/upload/note`, {
+          method: "POST",
+          body: formData,
+        }),
+        fetch(`${process.env.NEXT_PUBLIC_API_NOTEBOOK}/api/notes`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(notebookPayload),
+        }),
+      ]);
 
-    toast.success("Saved successfully!");
-  } catch (err) {
-    console.error(err);
-    toast.error("Save failed!");
-  } finally {
-    setIsSaving(false);
-  }
+      triggerReloadNote();
+
+      toast.success("Saved successfully!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Save failed!");
+    } finally {
+      setIsSaving(false);
+    }
   };
-
 
   return (
     <Box>

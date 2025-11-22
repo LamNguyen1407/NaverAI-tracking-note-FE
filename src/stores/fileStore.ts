@@ -20,7 +20,7 @@ export const useFileStore = create<FileStore>((set) => ({
   })),
 
   triggerReloadNote: () => set((state) => ({
-    reloadFlag: state.reloadNoteFlag + 1,
+    reloadNoteFlag: state.reloadNoteFlag + 1,
   })),
 
   clearReloadFlag: () => set({ shouldReload: false }),

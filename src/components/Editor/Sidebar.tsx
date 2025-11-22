@@ -27,6 +27,7 @@ import { ca } from "zod/v4/locales";
 import { toast } from "react-toastify";
 import DialogUpload from "../File/DialogUpload";
 import CustomButton from "../Button/CustomButton";
+import { useFileStore } from "@/stores/fileStore";
 
 const SIDEBAR_BG_URL = "/assets/jellyfish.png";
 const SIDEBAR_WIDTH = 280;
@@ -69,6 +70,8 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
   const router = useRouter();
   const pathname = usePathname();
 
+  const {reloadNoteFlag} = useFileStore()
+
 
   const handleLogout = () => {
     router.push("/login");
@@ -104,7 +107,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
     };
 
     fetchNotes();
-  }, []);
+  }, [reloadNoteFlag]);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: string) => {
     // Không setTab ở đây, chỉ điều hướng.

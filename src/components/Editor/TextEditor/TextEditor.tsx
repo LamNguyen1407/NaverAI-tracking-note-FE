@@ -121,6 +121,7 @@ import {
   Separator,
 } from "@mdxeditor/editor";
 import { initialMarkdown } from "./initialMarkdown";
+import { useFileStore } from "@/stores/fileStore";
 
 export async function saveToSupabase(user_id: string, session_id: string) {
   const { data, error } = await supabase
@@ -155,6 +156,8 @@ const TextEditor = ({ content }: any) => {
 
   const [showDialog, setShowDialog] = useState(false);
   const [noteTitle, setNoteTitle] = useState("");
+
+  const {triggerReloadNote} = useFileStore()
 
   const handleEditorChange = (newMarkdown: string) => {
     setMarkdown(newMarkdown);
@@ -589,18 +592,13 @@ const TextEditor = ({ content }: any) => {
     }
   };
 
-  const handleSave = () => {
-    setShowDialog(true)
-  };
-
-  const handleConfirmSave = async () => {
+  const handleSave = async () => {
     if (!noteTitle.trim()) {
     toast.error("Please enter a title!");
     return;
     }
 
     setIsSaving(true);
-    setShowDialog(false);
 
      try {
     // ---- 1. Chuẩn bị file markdown để upload MinIO ----
@@ -629,6 +627,8 @@ const TextEditor = ({ content }: any) => {
         body: JSON.stringify(notebookPayload),
       }),
     ]);
+    
+    triggerReloadNote();
 
     toast.success("Saved successfully!");
   } catch (err) {
@@ -641,32 +641,6 @@ const TextEditor = ({ content }: any) => {
 
   return (
     <Box>
-      {/* Dialog Confirm Save  */}
-      <Dialog open={showDialog} onClose={() => setShowDialog(false)}>
-        <DialogTitle>Save note</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            fullWidth
-            label="Title"
-            value={noteTitle}
-            onChange={(e) => setNoteTitle(e.target.value)}
-            sx={{ mt: 1 }}
-          />
-        </DialogContent>
-
-        <DialogActions>
-          <Button onClick={() => setShowDialog(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={handleConfirmSave}
-            disabled={isSaving}
-          >
-            {isSaving ? "Saving..." : "Save"}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
       {/* Chips List */}
       <Box
         className="w-full max-w-[70vw] mb-2.5 flex gap-0.5 min-h-8"
@@ -785,6 +759,7 @@ const TextEditor = ({ content }: any) => {
             <TextField
               variant="standard"
               value={noteTitle}
+              placeholder="Your note title here"
               onChange={(e) => setNoteTitle(e.target.value)}
               InputProps={{
                 disableUnderline: true, // bỏ underline khi chưa focus

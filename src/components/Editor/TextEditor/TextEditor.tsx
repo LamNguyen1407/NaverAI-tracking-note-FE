@@ -351,8 +351,19 @@ const TextEditor = ({ content }: any) => {
     const selectedText = selection ? selection.toString() : "";
 
     if (!selectedText || selectedText.trim() === "") {
-      alert("Please select some text first!");
+      // alert("Please select some text first!");
+      toast.error("Please select some text first!", {
+        position: "top-right",
+      });
+
       return;
+    }
+
+    if (selectedIds.length === 0) {
+      // alert("Please select some sources!");
+      toast.error("Please select some sources!", {
+        position: "top-right",
+      });
     }
     simulateApiCall(selectedText);
   };
@@ -398,7 +409,9 @@ const TextEditor = ({ content }: any) => {
     setIsSaving(true);
     setTimeout(() => {
       setIsSaving(false);
-      toast.success("Saved!");
+      toast.success("Saved!", {
+        position: "top-right",
+      });
     }, 1500);
   };
 
@@ -406,7 +419,7 @@ const TextEditor = ({ content }: any) => {
     <Box>
       {/* Chips List */}
       <Box
-        className="w-full max-w-[70vw] mb-[10px] flex gap-0.5"
+        className="w-full max-w-[70vw] mb-2.5 flex gap-0.5 min-h-8"
         sx={{
           overflowX: "auto",
           overflowY: "hidden",

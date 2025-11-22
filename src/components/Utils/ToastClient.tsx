@@ -6,13 +6,13 @@ import "react-toastify/dist/ReactToastify.css";
 export function ToastClient() {
   return (
     <>
-      <ToastContainer position="top-center" />
+      <ToastContainer position="top-left" />
 
       {/* Toast CSS override — chạy được vì đây là client component */}
       <style jsx global>{`
         .Toastify__toast {
-          background: rgba(255, 255, 255, 0.1) !important; /* sáng lên 1 chút */
-          backdrop-filter: blur(14px) !important;
+          background: rgba(255, 255, 255, 0.7) !important; /* sáng lên 1 chút */
+          backdrop-filter: blur(15px) !important;
           -webkit-backdrop-filter: blur(14px) !important;
           border: 1px solid rgba(255, 255, 255, 0.25) !important;
           border-radius: 14px !important;

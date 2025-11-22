@@ -40,6 +40,7 @@ export default function HomePage() {
       toast.success("Login successful!");
 
       // store token
+      localStorage.setItem("user_id", result.session.user.id);
       localStorage.setItem("access_token", result.session.access_token);
 
       router.push("/content/editor");

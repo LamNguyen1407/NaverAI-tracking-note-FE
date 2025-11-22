@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useState, useEffect } from "react";
 import { supabase } from "@/components/Utils/SupabaseClient";
 
 // Import UI Components
@@ -143,18 +142,12 @@ export async function saveToSupabase(user_id: string, session_id: string) {
 }
 
 const TextEditor = ({ content }: any) => {
-  const { id } = useParams(); // lấy param nếu có
 
-  const isRootEditor = !id; // true khi URL = /editor
-
-  const [markdown, setMarkdown] = useState(
-    isRootEditor ? initialMarkdown : content || initialMarkdown
-  );
+  const [markdown, setMarkdown] = useState(content || initialMarkdown);
 
   const [showSidebar, setShowSidebar] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  const [showDialog, setShowDialog] = useState(false);
   const [noteTitle, setNoteTitle] = useState("");
 
   const {triggerReloadNote} = useFileStore()
@@ -638,6 +631,7 @@ const TextEditor = ({ content }: any) => {
     setIsSaving(false);
   }
   };
+
 
   return (
     <Box>

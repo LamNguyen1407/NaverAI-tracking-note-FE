@@ -19,6 +19,10 @@ import {
   Checkbox,
   ListItemIcon,
   ListItemText,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 
 import SmartToyIcon from "@mui/icons-material/SmartToy";
@@ -114,11 +118,15 @@ import {
   Separator,
 } from "@mdxeditor/editor";
 import { initialMarkdown } from "./initialMarkdown";
+import { GlassCard } from "@developer-hub/liquid-glass";
 
 const TextEditor = ({ content }: any) => {
   const [markdown, setMarkdown] = useState(content || initialMarkdown);
   const [showSidebar, setShowSidebar] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+
+  const [showDialog, setShowDialog] = useState(false);
+  const [noteTitle, setNoteTitle] = useState("");
 
   const handleEditorChange = (newMarkdown: string) => {
     setMarkdown(newMarkdown);
@@ -481,18 +489,84 @@ const TextEditor = ({ content }: any) => {
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {
+    setShowDialog(true)
+  };
+
+  const handleConfirmSave = async () => {
+    if (!noteTitle.trim()) {
+    toast.error("Please enter a title!");
+    return;
+    }
+
     setIsSaving(true);
-    setTimeout(() => {
-      setIsSaving(false);
-      toast.success("Saved!", {
-        position: "top-right",
-      });
-    }, 1500);
+    setShowDialog(false);
+
+     try {
+    // ---- 1. Chuẩn bị file markdown để upload MinIO ----
+    const blob = new Blob([markdown], { type: "text/markdown" });
+    const file = new File([blob], `${noteTitle}.md`, { type: "text/markdown" });
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    // ---- 2. Tạo body request cho NotebookLM ----
+    const notebookPayload = {
+      title: noteTitle,
+      content: markdown,
+      note_type: "human"
+    };
+
+    // ---- 3. Chạy song song 2 API ----
+    await Promise.all([
+      fetch(`${process.env.NEXT_PUBLIC_API}/files/upload/note`, {
+        method: "POST",
+        body: formData,
+      }),
+      fetch(`${process.env.NEXT_PUBLIC_API_NOTEBOOK}/api/notes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(notebookPayload),
+      }),
+    ]);
+
+    toast.success("Saved successfully!");
+  } catch (err) {
+    console.error(err);
+    toast.error("Save failed!");
+  } finally {
+    setIsSaving(false);
+  }
   };
 
   return (
     <Box>
+      {/* Dialog Confirm Save  */}
+      <Dialog open={showDialog} onClose={() => setShowDialog(false)}>
+        <DialogTitle>Save note</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            fullWidth
+            label="Title"
+            value={noteTitle}
+            onChange={(e) => setNoteTitle(e.target.value)}
+            sx={{ mt: 1 }}
+          />
+        </DialogContent>
+
+        <DialogActions>
+          <Button onClick={() => setShowDialog(false)}>Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={handleConfirmSave}
+            disabled={isSaving}
+          >
+            {isSaving ? "Saving..." : "Save"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {/* Chips List */}
       <Box
         className="w-full max-w-[70vw] mb-2.5 flex gap-0.5 min-h-8"

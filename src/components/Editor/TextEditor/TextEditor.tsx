@@ -1,6 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
+import { supabase } from "@/components/Utils/SupabaseClient";
+
 // Import UI Components
 import {
   Box,
@@ -115,8 +118,34 @@ import {
 } from "@mdxeditor/editor";
 import { initialMarkdown } from "./initialMarkdown";
 
+export async function saveToSupabase(user_id: string, session_id: string) {
+  const { data, error } = await supabase
+    .from("history_result") // ← đổi tên theo bảng thật của bạn
+    .insert([
+      {
+        user_id,
+        session_id,
+      },
+    ]);
+
+  if (error) {
+    console.error("❌ Supabase Insert Error:", error);
+    throw error;
+  }
+
+  console.log("✅ Insert success:", data);
+  return data;
+}
+
 const TextEditor = ({ content }: any) => {
-  const [markdown, setMarkdown] = useState(content || initialMarkdown);
+  const { id } = useParams(); // lấy param nếu có
+
+  const isRootEditor = !id; // true khi URL = /editor
+
+  const [markdown, setMarkdown] = useState(
+    isRootEditor ? initialMarkdown : content || initialMarkdown
+  );
+
   const [showSidebar, setShowSidebar] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -130,10 +159,16 @@ const TextEditor = ({ content }: any) => {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [allSources, setAllSources] = useState<SimpleSource[]>([]);
+  const [noteTitle, setNoteTitle] = useState("Your note Title");
+
+  const [isLoadingSources, setLoadingSources] = useState(false);
+  const [isLoadingHistory, setLoadingHistory] = useState(false);
+  const [isLoadingContent, setLoadingContent] = useState(false);
 
   useEffect(() => {
     // Chỉ fetch khi menu được mở
     if (!showSourceMenu) return;
+    setLoadingSources(true);
 
     const fetchData = async () => {
       try {
@@ -164,6 +199,8 @@ const TextEditor = ({ content }: any) => {
         setAllSources([...mappedSources, ...mappedNotes]);
       } catch (error) {
         console.error("Error fetching sources/notes:", error);
+      } finally {
+        setLoadingSources(false);
       }
     };
 
@@ -189,6 +226,10 @@ const TextEditor = ({ content }: any) => {
       // const response = await api.getHistory();
 
       // Mock data cũ
+      setLoadingHistory(true);
+
+      await new Promise((resolve) => setTimeout(resolve, 800));
+
       const oldHistory: UnifiedResultItem[] = [
         {
           id: "old-1",
@@ -204,6 +245,7 @@ const TextEditor = ({ content }: any) => {
 
       // Set vào state ban đầu
       setResults(oldHistory);
+      setLoadingHistory(false);
     };
 
     fetchHistory();
@@ -401,6 +443,14 @@ const TextEditor = ({ content }: any) => {
 
       // --- 6. UPDATE UI ---
       setResults((prev) => [...newItems, ...prev]);
+
+      const user_id = localStorage.getItem("user_id");
+      if (!user_id) {
+        console.error("No user_id found in localStorage");
+        return;
+      }
+
+      saveToSupabase(user_id, newSessionId);
     } catch (error) {
       console.error("Error calling API:", error);
       toast.error("API returned an error.", { position: "top-right" });
@@ -483,12 +533,33 @@ const TextEditor = ({ content }: any) => {
 
   const handleSave = async () => {
     setIsSaving(true);
-    setTimeout(() => {
+
+    try {
+      // Giả lập gọi API (delay 1.5s)
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      const payload = {
+        title: noteTitle,
+        content: markdown, // ← gửi text markdown
+        note_type: "human",
+      };
+
+      console.log("📤 Sending payload:", payload);
+
+      // Nếu sau này bạn đổi sang real API:
+      // await fetch("/api/notes", {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify(payload),
+      // });
+
+      toast.success("Saved!", { position: "top-right" });
+    } catch (err) {
+      console.log(err);
+      toast.error("Error saving note!");
+    } finally {
       setIsSaving(false);
-      toast.success("Saved!", {
-        position: "top-right",
-      });
-    }, 1500);
+    }
   };
 
   return (
@@ -608,6 +679,34 @@ const TextEditor = ({ content }: any) => {
               {isSaving ? "saving..." : "Save"}
             </Button>
 
+            <TextField
+              variant="standard"
+              value={noteTitle}
+              onChange={(e) => setNoteTitle(e.target.value)}
+              InputProps={{
+                disableUnderline: true, // bỏ underline khi chưa focus
+              }}
+              sx={{
+                maxWidth: "150px",
+                mt: "5px",
+                "& .MuiInputBase-root": {
+                  cursor: "pointer",
+                  overflowX: "auto",
+                  whiteSpace: "nowrap",
+                },
+                "& .MuiInputBase-root:hover": {
+                  cursor: "pointer",
+                },
+                "& .MuiInputBase-input": {
+                  padding: 0,
+                },
+                "& .MuiInputBase-root.Mui-focused": {
+                  cursor: "text",
+                  borderBottom: "1px solid", // khi focus mới có gạch
+                },
+              }}
+            />
+
             {/* Nút Check Selection cũ giữ nguyên ở đây */}
             <div className="flex gap-3">
               <Button
@@ -680,23 +779,36 @@ const TextEditor = ({ content }: any) => {
                       scrollbarColor: "rgba(0,0,0,0.5) transparent",
                     }}
                   >
-                    {filteredSources.map((s) => (
-                      <ListItem key={s.id} disablePadding dense>
-                        <ListItemButton
-                          onClick={() => handleToggleSource(s.id)}
-                        >
-                          <ListItemIcon sx={{ minWidth: 36 }}>
-                            <Checkbox
-                              edge="start"
-                              checked={selectedIds.includes(s.id)}
-                              size="small"
-                            />
-                          </ListItemIcon>
-
-                          <ListItemText primary={s.name} />
-                        </ListItemButton>
-                      </ListItem>
-                    ))}
+                    {isLoadingSources ? (
+                      <Box
+                        sx={{
+                          width: "100%",
+                          py: 4,
+                          display: "flex",
+                          justifyContent: "center",
+                          alignItems: "center",
+                        }}
+                      >
+                        <CircularProgress size={28} />
+                      </Box>
+                    ) : (
+                      filteredSources.map((s) => (
+                        <ListItem key={s.id} disablePadding dense>
+                          <ListItemButton
+                            onClick={() => handleToggleSource(s.id)}
+                          >
+                            <ListItemIcon sx={{ minWidth: 36 }}>
+                              <Checkbox
+                                edge="start"
+                                checked={selectedIds.includes(s.id)}
+                                size="small"
+                              />
+                            </ListItemIcon>
+                            <ListItemText primary={s.name} />
+                          </ListItemButton>
+                        </ListItem>
+                      ))
+                    )}
                   </List>
                 </Paper>
               )}
@@ -876,7 +988,21 @@ const TextEditor = ({ content }: any) => {
                 gap: 2,
               }}
             >
-              {results.length === 0 && (
+              {isLoadingHistory ? (
+                // --- Loading State ---
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    mt: 4,
+                    mb: 4,
+                  }}
+                >
+                  <CircularProgress size={32} />
+                </Box>
+              ) : results.length === 0 ? (
+                // --- Empty State ---
                 <Typography
                   variant="body2"
                   color="text.disabled"
@@ -887,241 +1013,250 @@ const TextEditor = ({ content }: any) => {
                   <br />
                   Select text and click "Check Selection".
                 </Typography>
-              )}
+              ) : (
+                results.map((res, index) => {
+                  const config = getTypeConfig(res.type);
 
-              {results.map((res, index) => {
-                const config = getTypeConfig(res.type);
-
-                const displayNumber = results.length - index;
-                return (
-                  <Card
-                    key={res.id}
-                    sx={{
-                      mb: 2,
-                      background: "rgba(255,255,255,0.06)", // Glass base
-                      backdropFilter: "blur(10px)",
-                      WebkitBackdropFilter: "blur(10px)",
-                      border: "1px solid",
-                      borderColor: config.border, // Màu viền theo loại
-                      borderRadius: "16px",
-                      boxShadow: "0 4px 24px -1px rgba(0,0,0,0.1)",
-                      transition: "all 0.2s ease",
-                      "&:hover": {
-                        transform: "translateY(-2px)",
-                        boxShadow: "0 8px 30px -2px rgba(0,0,0,0.15)",
-                        borderColor: config.color,
-                      },
-                    }}
-                  >
-                    <CardContent sx={{ p: "16px !important" }}>
-                      {/* --- ROW 1: Icon + Message | Index + Close Button --- */}
-                      <Box
-                        sx={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "flex-start", // Căn lề trên để nút X không bị lệch
-                          mb: 1.5,
-                          pb: 1,
-                          borderBottom: `1px solid ${config.border}`,
-                        }}
-                      >
-                        {/* Left: Icon & Message */}
+                  const displayNumber = results.length - index;
+                  return (
+                    <Card
+                      key={res.id}
+                      sx={{
+                        mb: 2,
+                        background: "rgba(255,255,255,0.06)", // Glass base
+                        backdropFilter: "blur(10px)",
+                        WebkitBackdropFilter: "blur(10px)",
+                        border: "1px solid",
+                        borderColor: config.border, // Màu viền theo loại
+                        borderRadius: "16px",
+                        boxShadow: "0 4px 24px -1px rgba(0,0,0,0.1)",
+                        transition: "all 0.2s ease",
+                        "&:hover": {
+                          transform: "translateY(-2px)",
+                          boxShadow: "0 8px 30px -2px rgba(0,0,0,0.15)",
+                          borderColor: config.color,
+                        },
+                      }}
+                    >
+                      <CardContent sx={{ p: "16px !important" }}>
+                        {/* --- ROW 1: Icon + Message | Index + Close Button --- */}
                         <Box
                           sx={{
                             display: "flex",
-                            alignItems: "center",
-                            gap: 1,
-                            mt: 0.5,
+                            justifyContent: "space-between",
+                            alignItems: "flex-start", // Căn lề trên để nút X không bị lệch
+                            mb: 1.5,
+                            pb: 1,
+                            borderBottom: `1px solid ${config.border}`,
                           }}
                         >
-                          {config.icon}
-                          <Typography
-                            variant="subtitle2"
-                            sx={{
-                              color: config.color,
-                              fontWeight: 700,
-                              textTransform: "uppercase",
-                              fontSize: "0.75rem",
-                            }}
-                          >
-                            {res.displayMessage}
-                          </Typography>
-                        </Box>
-
-                        {/* Right: Index Number & Delete Button */}
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                        >
-                          {/* Hiển thị số thứ tự đã tính toán */}
-                          <Typography
-                            variant="caption"
-                            sx={{
-                              color: "text.disabled",
-                              fontWeight: 600,
-                              fontFamily: "monospace",
-                              fontSize: "0.9rem",
-                            }}
-                          >
-                            #{String(displayNumber).padStart(2, "0")}
-                          </Typography>
-
-                          {/* Nút Xóa */}
-                          <IconButton
-                            size="small"
-                            onClick={() => handleDelete(res.id)}
-                            sx={{
-                              color: "text.disabled",
-                              padding: 0,
-                              ml: 0.5,
-                              "&:hover": {
-                                color: "error.main",
-                                bgcolor: "transparent",
-                              },
-                            }}
-                          >
-                            <CloseIcon
-                              fontSize="small"
-                              sx={{ fontSize: "1.1rem" }}
-                            />
-                          </IconButton>
-                        </Box>
-                      </Box>
-
-                      {/* --- ROW 2: Sentence (New Note Sentence) --- */}
-                      <Typography
-                        variant="body1"
-                        sx={{
-                          color: "text.primary",
-                          fontWeight: 500,
-                          fontSize: "0.95rem",
-                          mb: 1,
-                          lineHeight: 1.5,
-                        }}
-                      >
-                        "{res.sentence}"
-                      </Typography>
-
-                      {/* --- ROW 3: Reason / Missing Context --- */}
-                      <Box sx={{ mb: 1, display: "flex", gap: 1 }}>
-                        <Typography
-                          component="span"
-                          variant="caption"
-                          sx={{
-                            color: "text.secondary",
-                            fontWeight: 700,
-                            minWidth: "60px",
-                          }}
-                        >
-                          Analysis:
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{ color: "text.secondary", fontSize: "0.875rem" }}
-                        >
-                          {res.reason}
-                        </Typography>
-                      </Box>
-
-                      {/* --- ROW 4: Suggested Rewrite / Addition --- */}
-                      <Box
-                        sx={{
-                          mb: 1,
-                          display: "flex",
-                          gap: 1,
-                          p: 1,
-                          borderRadius: "8px",
-                          bgcolor: "rgba(255,255,255,0.03)", // Highlight nhẹ phần suggest
-                          border: "1px dashed rgba(255,255,255,0.15)",
-                        }}
-                      >
-                        <Typography
-                          component="span"
-                          variant="caption"
-                          sx={{
-                            color: "#4caf50", // Xanh lá cho suggestion
-                            fontWeight: 700,
-                            minWidth: "60px",
-                            pt: 0.2,
-                          }}
-                        >
-                          Suggest:
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            color: "text.primary",
-                            fontSize: "0.875rem",
-                            fontStyle: "italic",
-                          }}
-                        >
-                          {res.suggestion}
-                        </Typography>
-                      </Box>
-
-                      {/* --- Expandable Sources Toggle (Chỉ hiện nếu có sources) --- */}
-                      {res.sources && res.sources.length > 0 && (
-                        <>
+                          {/* Left: Icon & Message */}
                           <Box
                             sx={{
                               display: "flex",
-                              justifyContent: "flex-end",
-                              mt: 1,
+                              alignItems: "center",
+                              gap: 1,
+                              mt: 0.5,
                             }}
                           >
-                            <Button
-                              size="small"
-                              onClick={() => toggleExpand(res.id)}
-                              startIcon={
-                                res.expanded ? (
-                                  <ExpandLessIcon />
-                                ) : (
-                                  <ExpandMoreIcon />
-                                )
-                              }
+                            {config.icon}
+                            <Typography
+                              variant="subtitle2"
                               sx={{
-                                textTransform: "none",
+                                color: config.color,
+                                fontWeight: 700,
+                                textTransform: "uppercase",
                                 fontSize: "0.75rem",
-                                color: "text.secondary",
-                                minWidth: 0,
-                                p: "2px 8px",
                               }}
                             >
-                              {res.expanded ? "Hide Evidence" : "View Evidence"}
-                            </Button>
+                              {res.displayMessage}
+                            </Typography>
                           </Box>
 
-                          {res.expanded && (
-                            <Box
+                          {/* Right: Index Number & Delete Button */}
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                            }}
+                          >
+                            {/* Hiển thị số thứ tự đã tính toán */}
+                            <Typography
+                              variant="caption"
                               sx={{
-                                mt: 1,
-                                p: 1.5,
-                                borderRadius: "8px",
-                                bgcolor: "rgba(0,0,0,0.1)",
+                                color: "text.disabled",
+                                fontWeight: 600,
+                                fontFamily: "monospace",
+                                fontSize: "0.9rem",
                               }}
                             >
-                              {res.sources.map((src, i) => (
-                                <Typography
-                                  key={i}
-                                  variant="caption"
-                                  sx={{
-                                    display: "block",
-                                    color: "text.secondary",
-                                    fontFamily: "monospace",
-                                    mb: 0.5,
-                                    "&:last-child": { mb: 0 },
-                                  }}
-                                >
-                                  • {src}
-                                </Typography>
-                              ))}
+                              #{String(displayNumber).padStart(2, "0")}
+                            </Typography>
+
+                            {/* Nút Xóa */}
+                            <IconButton
+                              size="small"
+                              onClick={() => handleDelete(res.id)}
+                              sx={{
+                                color: "text.disabled",
+                                padding: 0,
+                                ml: 0.5,
+                                "&:hover": {
+                                  color: "error.main",
+                                  bgcolor: "transparent",
+                                },
+                              }}
+                            >
+                              <CloseIcon
+                                fontSize="small"
+                                sx={{ fontSize: "1.1rem" }}
+                              />
+                            </IconButton>
+                          </Box>
+                        </Box>
+
+                        {/* --- ROW 2: Sentence (New Note Sentence) --- */}
+                        <Typography
+                          variant="body1"
+                          sx={{
+                            color: "text.primary",
+                            fontWeight: 500,
+                            fontSize: "0.95rem",
+                            mb: 1,
+                            lineHeight: 1.5,
+                          }}
+                        >
+                          "{res.sentence}"
+                        </Typography>
+
+                        {/* --- ROW 3: Reason / Missing Context --- */}
+                        <Box sx={{ mb: 1, display: "flex", gap: 1 }}>
+                          <Typography
+                            component="span"
+                            variant="caption"
+                            sx={{
+                              color: "text.secondary",
+                              fontWeight: 700,
+                              minWidth: "60px",
+                            }}
+                          >
+                            Analysis:
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              color: "text.secondary",
+                              fontSize: "0.875rem",
+                            }}
+                          >
+                            {res.reason}
+                          </Typography>
+                        </Box>
+
+                        {/* --- ROW 4: Suggested Rewrite / Addition --- */}
+                        <Box
+                          sx={{
+                            mb: 1,
+                            display: "flex",
+                            gap: 1,
+                            p: 1,
+                            borderRadius: "8px",
+                            bgcolor: "rgba(255,255,255,0.03)", // Highlight nhẹ phần suggest
+                            border: "1px dashed rgba(255,255,255,0.15)",
+                          }}
+                        >
+                          <Typography
+                            component="span"
+                            variant="caption"
+                            sx={{
+                              color: "#4caf50", // Xanh lá cho suggestion
+                              fontWeight: 700,
+                              minWidth: "60px",
+                              pt: 0.2,
+                            }}
+                          >
+                            Suggest:
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              color: "text.primary",
+                              fontSize: "0.875rem",
+                              fontStyle: "italic",
+                            }}
+                          >
+                            {res.suggestion}
+                          </Typography>
+                        </Box>
+
+                        {/* --- Expandable Sources Toggle (Chỉ hiện nếu có sources) --- */}
+                        {res.sources && res.sources.length > 0 && (
+                          <>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                justifyContent: "flex-end",
+                                mt: 1,
+                              }}
+                            >
+                              <Button
+                                size="small"
+                                onClick={() => toggleExpand(res.id)}
+                                startIcon={
+                                  res.expanded ? (
+                                    <ExpandLessIcon />
+                                  ) : (
+                                    <ExpandMoreIcon />
+                                  )
+                                }
+                                sx={{
+                                  textTransform: "none",
+                                  fontSize: "0.75rem",
+                                  color: "text.secondary",
+                                  minWidth: 0,
+                                  p: "2px 8px",
+                                }}
+                              >
+                                {res.expanded
+                                  ? "Hide Evidence"
+                                  : "View Evidence"}
+                              </Button>
                             </Box>
-                          )}
-                        </>
-                      )}
-                    </CardContent>
-                  </Card>
-                );
-              })}
+
+                            {res.expanded && (
+                              <Box
+                                sx={{
+                                  mt: 1,
+                                  p: 1.5,
+                                  borderRadius: "8px",
+                                  bgcolor: "rgba(0,0,0,0.1)",
+                                }}
+                              >
+                                {res.sources.map((src, i) => (
+                                  <Typography
+                                    key={i}
+                                    variant="caption"
+                                    sx={{
+                                      display: "block",
+                                      color: "text.secondary",
+                                      fontFamily: "monospace",
+                                      mb: 0.5,
+                                      "&:last-child": { mb: 0 },
+                                    }}
+                                  >
+                                    • {src}
+                                  </Typography>
+                                ))}
+                              </Box>
+                            )}
+                          </>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })
+              )}
             </Box>
           </Box>
         </Box>

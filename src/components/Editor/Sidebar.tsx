@@ -14,6 +14,7 @@ import {
   Tabs,
   Tab,
   Button,
+  Dialog,
 } from "@mui/material";
 import { useRouter, usePathname } from "next/navigation";
 import LogoutIcon from "@mui/icons-material/Logout";
@@ -24,7 +25,8 @@ import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
 import { GlassCard } from "@developer-hub/liquid-glass";
 import { ca } from "zod/v4/locales";
 import { toast } from "react-toastify";
-import { useFileStore } from "@/stores/fileStore";
+import DialogUpload from "../File/DialogUpload";
+import CustomButton from "../Button/CustomButton";
 
 const SIDEBAR_BG_URL = "/assets/jellyfish.png";
 const SIDEBAR_WIDTH = 280;
@@ -62,13 +64,13 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
   const [tab, setTab] = useState<"Note" | "Files" | "Chat">("Note");
   const [selectedNote, setSelectedNote] = useState<FileMeta | null>(null);
   const [notes, setNotes] = useState<FileMeta[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   
 
   const router = useRouter();
   const pathname = usePathname();
 
-  const triggerReload = useFileStore((state) => state.triggerReload);
 
   const handleLogout = () => {
     router.push("/login");
@@ -82,66 +84,6 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
   const handleCreateNote = () => {
     router.push("/content/editor");
   }
-
-  const handleUploadFile = async () => {
-  const input = document.createElement("input");
-  input.type = "file";
-  input.accept = "*/*";
-
-  input.multiple = false;
-
-  input.onchange = async (e: Event) => {
-    const file = (e.target as HTMLInputElement).files?.[0];
-    if (!file) return;
-
-    // Kiểm tra extension
-    const allowedExtensions = ["pdf", "doc", "docx"];
-    const ext = file.name.split(".").pop()?.toLowerCase();
-
-    // Kiểm tra MIME type
-    const allowedTypes = [
-      "application/pdf",
-      "application/msword",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    ];
-
-    if (!ext || !allowedExtensions.includes(ext) || !allowedTypes.includes(file.type)) {
-      toast.error("Chỉ được upload file PDF hoặc DOC/DOCX");
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      setIsLoading(true);
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API}/files/upload/document`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-
-      if (!res.ok) {
-        const text = await res.text().catch(() => res.statusText);
-        throw new Error(text || "Upload failed");
-      }
-
-      const data = await res.json();
-      toast.success(data.message || "Upload successful!");
-      triggerReload();
-    } catch (error: any) {
-      console.log(error);
-      toast.error(error.details || error.message || "Upload failed");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  input.click();
-};
-
 
   useEffect(() => {
     const fetchNotes = async () => {
@@ -350,42 +292,10 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
                   ))}
 
                     {tab === "Files" && 
-                      <Button 
-                        onClick={() => handleUploadFile()}
-                        startIcon={<CloudUploadIcon sx={{ fontSize: 22 }} />}
-                        disabled={isLoading}
-                        sx={{
-                          width: "100%",
-                          padding: "12px 16px",
-                          marginBottom: "10px",
-                          backgroundColor: isLoading 
-                            ? "rgba(255,255,255,0.3)" 
-                            : "rgba(1, 62, 106, 0.6)",
-                          backdropFilter: "blur(10px)",
-                          border: "1px solid rgba(255, 255, 255, 0.18)",
-                          borderRadius: "12px",
-                          color: "white",
-                          fontWeight: 600,
-                          fontSize: "14px",
-                          textTransform: "none",
-                          transition: "all 0.3s ease",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: 1,
-                          "&:hover": {
-                            backgroundColor: "rgba(67, 209, 255, 0.5)",
-                            border: "1px solid rgba(67, 209, 255, 0.8)",
-                            transform: "translateY(-2px)",
-                            boxShadow: "0 8px 16px rgba(67, 209, 255, 0.3)",
-                          },
-                          "&:active": {
-                            transform: "translateY(0px)",
-                          },
-                        }}
-                      >
-                        {isLoading ? "Đang upload..." : "Upload File"}
-                      </Button>
+                    <>
+                      <CustomButton onClick={() => setIsDialogOpen(true)} startIcon={<CloudUploadIcon sx={{ fontSize: 22 }} />}>Upload File</CustomButton>
+                      <DialogUpload open={isDialogOpen} onClose={() => setIsDialogOpen(false)} />
+                      </>
                     }
                 </List>
           </Box>

@@ -1,27 +1,58 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Box, CssBaseline, IconButton } from "@mui/material";
-import MenuIcon from "@mui/icons-material/Menu";
-import Sidebar from "@/components/Editor/Sidebar";
-import Toolbar from "@/components/Editor/Toolbar";
 import TextEditor from "@/components/Editor/TextEditor/TextEditor";
 import { useSidebar } from "@/context/SidebarContext";
-import { useSearchParams } from "next/navigation";
-import { initialMarkdown } from "@/components/Editor/TextEditor/initialMarkdown";
+import { useParams, useSearchParams } from "next/navigation";
+import { toast } from "react-toastify";
 // URL của ảnh nền chính (giả sử đặt trong /public)
 const MAIN_BG_URL = "/assets/sea9.png";
 const MENU_ICON_URL = "/assets/starfish.png";
 
 function App() {
-  const [content, setContent] = useState(initialMarkdown)
   const { toggleSidebar } = useSidebar();
 
-  useEffect(() => {
-    setContent(initialMarkdown)
-  }, [])
+  const params = useParams();
+  // ensure etag is a single string (useParams may return string | string[] | undefined)
+  const etagParam = (params as any)?.etag;
+  const etag = Array.isArray(etagParam) ? etagParam[0] : etagParam;
+  const [content, setContent] = useState("");
+  const [metadata, setMetadata] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
- 
+  useEffect(() => {
+    async function load() {
+        try{
+            setIsLoading(true);
+
+            const metadataRes = await fetch(`${process.env.NEXT_PUBLIC_API}/files/metadata/note/${etag}`);
+            const metadataData = await metadataRes.json();
+
+            const contentRes = await fetch(metadataData.preview_url);
+            const contentText = await contentRes.text();
+
+            setMetadata(metadataData);
+            setContent(contentText);
+        }catch(e){
+            console.error("Failed to load content or metadata", e);
+            toast.error("Failed to load content or metadata");
+        }finally{
+            setIsLoading(false);
+        }
+    }
+
+    load();
+  }, [etag]);
+
+    if (isLoading || !metadata) {
+        return (
+        <Box sx={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "white" }}>
+            Loading content...
+        </Box>
+        );
+    }
+  
   return (
     <Box
       sx={{
@@ -66,9 +97,6 @@ function App() {
           "&:hover": {
             transform: "scale(1.1)",
           },
-
-          // Hiển thị gradient/màu khác khi sidebar chưa mở (Không cần nữa vì dùng ảnh)
-          // Nếu bạn muốn thay đổi độ mờ của ảnh dựa trên isSidebarOpen, dùng opacity
         }}
       />
 

@@ -12,6 +12,7 @@ import { renderAsync } from "docx-preview";
 import DocumentList from "@/components/File/DocumentList";
 import NoteList from "@/components/File/NoteList";
 import { useFileStore } from "@/stores/fileStore";
+import { useUserStore } from "@/stores/userStore";
 
 const MENU_ICON_URL = "/assets/starfish.png";
 const MAIN_BG_URL = "/assets/files4.png";
@@ -49,6 +50,8 @@ function Files() {
 
  const { reloadFlag, shouldReload, clearReloadFlag } = useFileStore();
 
+ const {user_id} = useUserStore()
+
 
   // const handleOpen = async (file: any) => {
   //   setSelectedFile(file);
@@ -62,6 +65,7 @@ function Files() {
   const handleOpen = async (file: any) => {
     setSelectedFile(file);
     const res = await fetch(file.preview_url);
+    console.log(res);
     const blob = await res.blob();
 
     setFileBlob(blob);
@@ -98,6 +102,7 @@ function Files() {
   }, [openDialog]);
 
   useEffect(() => {
+    if(!user_id)  return;
     const fetchFiles = async () => {
       try {
         //Reset cache
@@ -116,8 +121,8 @@ function Files() {
 
         // Lấy Note và Document
         const [noteRes, docRes] = await Promise.all([
-          fetch(`${process.env.NEXT_PUBLIC_API}/files/metadata/note`),
-          fetch(`${process.env.NEXT_PUBLIC_API}/files/metadata/document`),
+          fetch(`${process.env.NEXT_PUBLIC_API}/files/metadata/note?user_id=${user_id}`),
+          fetch(`${process.env.NEXT_PUBLIC_API}/files/metadata/document?user_id=${user_id}`),
         ]);
 
         const [noteData, docData] = await Promise.all([
@@ -138,7 +143,8 @@ function Files() {
     };
 
     fetchFiles();
-  }, [reloadFlag]);
+  }, [user_id,reloadFlag]);
+
 
   return (
     <Box

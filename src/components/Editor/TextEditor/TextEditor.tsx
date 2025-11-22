@@ -22,6 +22,10 @@ import {
   Checkbox,
   ListItemIcon,
   ListItemText,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 
 import SmartToyIcon from "@mui/icons-material/SmartToy";
@@ -117,6 +121,7 @@ import {
   Separator,
 } from "@mdxeditor/editor";
 import { initialMarkdown } from "./initialMarkdown";
+import { useFileStore } from "@/stores/fileStore";
 
 export async function saveToSupabase(user_id: string, session_id: string) {
   const { data, error } = await supabase
@@ -149,6 +154,11 @@ const TextEditor = ({ content }: any) => {
   const [showSidebar, setShowSidebar] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
+  const [showDialog, setShowDialog] = useState(false);
+  const [noteTitle, setNoteTitle] = useState("");
+
+  const {triggerReloadNote} = useFileStore()
+
   const handleEditorChange = (newMarkdown: string) => {
     setMarkdown(newMarkdown);
   };
@@ -159,7 +169,6 @@ const TextEditor = ({ content }: any) => {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [allSources, setAllSources] = useState<SimpleSource[]>([]);
-  const [noteTitle, setNoteTitle] = useState("Your note Title");
 
   const [isLoadingSources, setLoadingSources] = useState(false);
   const [isLoadingHistory, setLoadingHistory] = useState(false);
@@ -584,34 +593,50 @@ const TextEditor = ({ content }: any) => {
   };
 
   const handleSave = async () => {
+    if (!noteTitle.trim()) {
+    toast.error("Please enter a title!");
+    return;
+    }
+
     setIsSaving(true);
 
-    try {
-      // Giả lập gọi API (delay 1.5s)
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+     try {
+    // ---- 1. Chuẩn bị file markdown để upload MinIO ----
+    const blob = new Blob([markdown], { type: "text/markdown" });
+    const file = new File([blob], `${noteTitle}.md`, { type: "text/markdown" });
 
-      const payload = {
-        title: noteTitle,
-        content: markdown, // ← gửi text markdown
-        note_type: "human",
-      };
+    const formData = new FormData();
+    formData.append("file", file);
 
-      console.log("📤 Sending payload:", payload);
+    // ---- 2. Tạo body request cho NotebookLM ----
+    const notebookPayload = {
+      title: noteTitle,
+      content: markdown,
+      note_type: "human"
+    };
 
-      // Nếu sau này bạn đổi sang real API:
-      // await fetch("/api/notes", {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify(payload),
-      // });
+    // ---- 3. Chạy song song 2 API ----
+    await Promise.all([
+      fetch(`${process.env.NEXT_PUBLIC_API}/files/upload/note`, {
+        method: "POST",
+        body: formData,
+      }),
+      fetch(`${process.env.NEXT_PUBLIC_API_NOTEBOOK}/api/notes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(notebookPayload),
+      }),
+    ]);
+    
+    triggerReloadNote();
 
-      toast.success("Saved!", { position: "top-right" });
-    } catch (err) {
-      console.log(err);
-      toast.error("Error saving note!");
-    } finally {
-      setIsSaving(false);
-    }
+    toast.success("Saved successfully!");
+  } catch (err) {
+    console.error(err);
+    toast.error("Save failed!");
+  } finally {
+    setIsSaving(false);
+  }
   };
 
   return (
@@ -734,6 +759,7 @@ const TextEditor = ({ content }: any) => {
             <TextField
               variant="standard"
               value={noteTitle}
+              placeholder="Your note title here"
               onChange={(e) => setNoteTitle(e.target.value)}
               InputProps={{
                 disableUnderline: true, // bỏ underline khi chưa focus

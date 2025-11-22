@@ -16,36 +16,11 @@ import { useFileStore } from "@/stores/fileStore";
 const MENU_ICON_URL = "/assets/starfish.png";
 const MAIN_BG_URL = "/assets/files4.png";
 
-// mockData để giả lập API
-// const mockData = {
-//   notes: [
-//     { id: 1, title: "Note 1", content: "Nội dung note 1" },
-//     { id: 2, title: "Note 2", content: "Nội dung note 2" },
-//     { id: 3, title: "Meeting Notes", content: "Kết luận buổi họp sáng nay." },
-//     { id: 4, title: "Todo Today", content: "Hoàn thiện UI, sửa lỗi API." },
-//     { id: 5, title: "Ideas", content: "Thử làm hiệu ứng 3D hover cho card." },
-//     { id: 6, title: "Study Plan", content: "React + Next.js chuyên sâu." },
-//     { id: 7, title: "Note 7", content: "Ghi chú linh tinh về dự án." },
-//     { id: 8, title: "Quick Draft", content: "Concept UI landing biển." },
-//     { id: 9, title: "Checklist", content: "Deploy + Test + Fix layout." },
-//     { id: 10, title: "Reminder", content: "Gửi email báo cáo trước 5h." },
-//   ],
+const fileMetadataCache = {
+  notes: null as any[] | null,
+  documents: null as any[] | null,
+};
 
-//   documents: [
-//     { id: 1, name: "Document 1.pdf", size: "2MB" },
-//     { id: 2, name: "Document 2.pdf", size: "1.2MB" },
-//     { id: 3, name: "Project-Overview.pdf", size: "3.1MB" },
-//     { id: 4, name: "Meeting-Minutes.docx", size: "860KB" },
-//     { id: 5, name: "Financial-Report-2024.pdf", size: "2.8MB" },
-//     { id: 6, name: "Team-Profile.docx", size: "740KB" },
-//     { id: 7, name: "UI-Design.pdf", size: "4.2MB" },
-//     { id: 8, name: "Requirements.pdf", size: "990KB" },
-//     { id: 9, name: "Manual-Guide.docx", size: "1.6MB" },
-//     { id: 10, name: "New-Client-Briefing.docx", size: "720KB" },
-//     { id: 11, name: "Marketing-Slides.pdf", size: "2.4MB" },
-//     { id: 12, name: "Onboarding.docx", size: "650KB" },
-//   ],
-// };
 
 function MarkdownPreview({ blob }: { blob: Blob }) {
   const [text, setText] = useState("");
@@ -72,7 +47,8 @@ function MarkdownPreview({ blob }: { blob: Blob }) {
 function Files() {
   const { toggleSidebar } = useSidebar();
 
-  const reloadFlag = useFileStore((state) => state.reloadFlag);
+ const { reloadFlag, shouldReload, clearReloadFlag } = useFileStore();
+
 
   // const handleOpen = async (file: any) => {
   //   setSelectedFile(file);
@@ -124,7 +100,19 @@ function Files() {
   useEffect(() => {
     const fetchFiles = async () => {
       try {
-        //lay note va document tu cached
+        //Reset cache
+        if(shouldReload){
+          fileMetadataCache.notes = null;
+          fileMetadataCache.documents = null;
+          clearReloadFlag();
+        }
+      
+        //lay data từ cached
+        if (fileMetadataCache.notes && fileMetadataCache.documents) {
+          setNotes(fileMetadataCache.notes);
+          setDocuments(fileMetadataCache.documents);
+          return;
+      }
 
         // Lấy Note và Document
         const [noteRes, docRes] = await Promise.all([
@@ -136,6 +124,10 @@ function Files() {
           noteRes.json(),
           docRes.json(),
         ]);
+
+        // Cache lại
+        fileMetadataCache.notes = noteData.files;
+        fileMetadataCache.documents = docData.files;
 
         // Cập nhật state
         setNotes(noteData.files);

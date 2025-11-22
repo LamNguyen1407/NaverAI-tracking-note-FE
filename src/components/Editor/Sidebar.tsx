@@ -28,6 +28,7 @@ import { toast } from "react-toastify";
 import DialogUpload from "../File/DialogUpload";
 import CustomButton from "../Button/CustomButton";
 import { useFileStore } from "@/stores/fileStore";
+import { useUserStore } from "@/stores/userStore";
 
 const SIDEBAR_BG_URL = "/assets/jellyfish.png";
 const SIDEBAR_WIDTH = 280;
@@ -65,6 +66,8 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
   const [notes, setNotes] = useState<FileMeta[]>([]);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const {user_id} = useUserStore()
   
 
   const router = useRouter();
@@ -92,22 +95,23 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
       return "Note"; // Default
     }, [pathname]);
 
-  useEffect(() => {
-    const fetchNotes = async () => {
-      try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API}/files/metadata/note`
-        );
-        const json = await res.json();
+useEffect(() => {
+  if (!user_id) return; // ❌ chưa load xong, bỏ qua
 
-        setNotes(json.files); // ❗ lưu full metadata
-      } catch (e) {
-        console.error("Failed to fetch note metadata", e);
-      }
-    };
+  const fetchNotes = async () => {
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API}/files/metadata/note?user_id=${user_id}`
+      );
+      const json = await res.json();
+      setNotes(json.files);
+    } catch (e) {
+      console.error("Failed to fetch note metadata", e);
+    }
+  };
 
-    fetchNotes();
-  }, [reloadNoteFlag]);
+  fetchNotes();
+}, [user_id, reloadNoteFlag]);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: string) => {
     // Không setTab ở đây, chỉ điều hướng.

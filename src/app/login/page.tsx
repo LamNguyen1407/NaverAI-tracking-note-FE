@@ -9,9 +9,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { LoginInput, LoginSchema } from "@/type/user/LoginForm";
 import { toast } from "react-toastify";
 import Link from "next/link";
+import { useUserStore } from "@/stores/userStore";
 
 export default function HomePage() {
   const router = useRouter();
+
+  const {setUser} = useUserStore();
+
 
   const {
     register,
@@ -38,6 +42,8 @@ export default function HomePage() {
       const result = await res.json();
 
       toast.success("Login successful!");
+
+      setUser(result.session.user.id);
 
       // store token
       localStorage.setItem("user_id", result.session.user.id);

@@ -122,6 +122,7 @@ import {
 } from "@mdxeditor/editor";
 import { initialMarkdown } from "./initialMarkdown";
 import { useFileStore } from "@/stores/fileStore";
+import { useUserStore } from "@/stores/userStore";
 
 export async function saveToSupabase(user_id: string, session_id: string) {
   const { data, error } = await supabase
@@ -151,6 +152,8 @@ const TextEditor = ({ content }: any) => {
   const [noteTitle, setNoteTitle] = useState("");
 
   const { triggerReloadNote } = useFileStore();
+
+  const {user_id} = useUserStore();
 
   const handleEditorChange = (newMarkdown: string) => {
     setMarkdown(newMarkdown);
@@ -612,7 +615,7 @@ const TextEditor = ({ content }: any) => {
 
       // ---- 3. Chạy song song 2 API ----
       await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_API}/files/upload/note`, {
+        fetch(`${process.env.NEXT_PUBLIC_API}/files/upload/note?user_id=${user_id}`, {
           method: "POST",
           body: formData,
         }),

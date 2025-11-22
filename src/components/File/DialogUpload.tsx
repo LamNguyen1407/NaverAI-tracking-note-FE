@@ -1,4 +1,5 @@
 import { useFileStore } from "@/stores/fileStore";
+import { useUserStore } from "@/stores/userStore";
 import {
   Dialog,
   DialogTitle,
@@ -37,6 +38,7 @@ const DialogUpload = ({
   const [url, setUrl] = useState("");
 
   const triggerReload = useFileStore((state) => state.triggerReload);
+  const {user_id} = useUserStore()
   
 
   const handleTabChange = (e: React.SyntheticEvent, newValue: number) => {
@@ -90,7 +92,7 @@ const DialogUpload = ({
         if (isDocument) {
         // Call both APIs
         [resMinio, resNotebook] = await Promise.all([
-            fetch(`${process.env.NEXT_PUBLIC_API}/files/upload/document`, {
+            fetch(`${process.env.NEXT_PUBLIC_API}/files/upload/document?user_id=${user_id}`, {
             method: "POST",
             body: formDataMinio,
             }),

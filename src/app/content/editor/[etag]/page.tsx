@@ -9,12 +9,15 @@ import TextEditor from "@/components/Editor/TextEditor/TextEditor";
 import { useSidebar } from "@/context/SidebarContext";
 import { useParams, useSearchParams } from "next/navigation";
 import { toast } from "react-toastify";
+import { useUserStore } from "@/stores/userStore";
 // URL của ảnh nền chính (giả sử đặt trong /public)
 const MAIN_BG_URL = "/assets/sea9.png";
 const MENU_ICON_URL = "/assets/starfish.png";
 
 function App() {
   const { toggleSidebar } = useSidebar();
+
+  const {user_id} = useUserStore()
 
   const params = useParams();
   // ensure etag is a single string (useParams may return string | string[] | undefined)
@@ -30,7 +33,7 @@ function App() {
         setIsLoading(true);
 
         const metadataRes = await fetch(
-          `${process.env.NEXT_PUBLIC_API}/files/metadata/note/${etag}`
+          `${process.env.NEXT_PUBLIC_API}/files/metadata/note/${etag}?user_id=${user_id}`
         );
         const metadataData = await metadataRes.json();
 

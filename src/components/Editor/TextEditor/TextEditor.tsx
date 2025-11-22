@@ -163,7 +163,6 @@ const TextEditor = ({ content }: any) => {
 
   const [isLoadingSources, setLoadingSources] = useState(false);
   const [isLoadingHistory, setLoadingHistory] = useState(false);
-  const [isLoadingContent, setLoadingContent] = useState(false);
 
   useEffect(() => {
     // Chỉ fetch khi menu được mở
@@ -222,34 +221,87 @@ const TextEditor = ({ content }: any) => {
   // Mock data lịch sử cũ (hoặc gọi API lấy history tại đây)
   useEffect(() => {
     const fetchHistory = async () => {
-      // Giả lập delay lấy data từ server về
-      // const response = await api.getHistory();
-
-      // Mock data cũ
       setLoadingHistory(true);
 
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      try {
+        const sessionId = "chat_session:9cikcp23p2itm1npo4jq";
 
-      const oldHistory: UnifiedResultItem[] = [
-        {
-          id: "old-1",
-          type: "conflict",
-          displayMessage: "Detected Contradiction",
-          sentence: "Lịch sử cũ: Caesar chết già.",
-          reason: "Lịch sử ghi nhận Caesar bị ám sát.",
-          suggestion: "Caesar bị ám sát tại Pompey Theatre.",
-          sources: ["Sách Lịch sử La Mã"],
-          expanded: false,
-        },
-      ];
+        const response = await fetch(
+          `http://49.50.137.210:5055/api/chat/sessions/${sessionId}`
+        );
 
-      // Set vào state ban đầu
-      setResults(oldHistory);
+        const data = await response.json();
+
+        // Tìm message type "ai"
+        const aiMessage = data.messages.find((msg: any) => msg.type === "ai");
+
+        if (!aiMessage) {
+          console.warn("Không tìm thấy message AI");
+          setLoadingHistory(false);
+          return;
+        }
+
+        // Parse JSON từ AI
+        const parsed = safeJsonParse(aiMessage.content);
+
+        console.log("PARSED AI JSON:", parsed);
+
+        // ---- TRANSFORM TO UnifiedResultItem[] ----
+        const newItems: UnifiedResultItem[] = [];
+
+        // 1. Conflicts
+        parsed.conflicts?.forEach((item: any) => {
+          newItems.push({
+            id: crypto.randomUUID(),
+            type: "conflict",
+            displayMessage: "Detected Contradiction",
+            sentence: item.new_note_sentence,
+            reason: item.reason,
+            suggestion: item.suggested_rewrite,
+            sources: item.evidence_from_sources ?? [],
+            expanded: false,
+          });
+        });
+
+        // 2. Improvements
+        parsed.improvements?.forEach((item: any) => {
+          newItems.push({
+            id: crypto.randomUUID(),
+            type: "improvement",
+            displayMessage: "Context Suggestion",
+            sentence: item.new_note_sentence,
+            reason: item.missing_context,
+            suggestion: item.suggested_addition,
+            sources: [],
+            expanded: false,
+          });
+        });
+
+        // 3. Hallucinations
+        parsed.hallucinations?.forEach((item: any) => {
+          newItems.push({
+            id: crypto.randomUUID(),
+            type: "hallucination",
+            displayMessage: "Unverified Info",
+            sentence: item.new_note_sentence,
+            reason: item.reason,
+            suggestion: item.suggested_rewrite,
+            sources: [],
+            expanded: false,
+          });
+        });
+
+        // Set kết quả vào UI
+        setResults(newItems);
+      } catch (error) {
+        console.error("Lỗi fetch history:", error);
+      }
+
       setLoadingHistory(false);
     };
 
     fetchHistory();
-  }, []); // Chạy 1 lần khi mount
+  }, []);
 
   const createNewChatSession = async (): Promise<string> => {
     const DEFAULT_SESSION = "chat_session:2dxvblmr1bgyv66753r6";

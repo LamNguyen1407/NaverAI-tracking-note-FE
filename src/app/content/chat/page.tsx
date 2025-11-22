@@ -140,11 +140,13 @@ function Chat() {
     sources: any[];
   }>({ notes: [], sources: [] });
   const [searchQuery, setSearchQuery] = useState("");
+  const [isLoadingMessages, setIsLoadingMessages] = useState(true);
 
   // --- EFFECT: FETCH DATA BAN ĐẦU ---
   useEffect(() => {
     const initData = async () => {
       try {
+        setIsLoadingMessages(true);
         // Gọi API fetch tin nhắn cũ
         const data: any = await fetchHistoryMessages();
         setMessages(data);
@@ -154,6 +156,8 @@ function Chat() {
         setAvailableSources(sourceData);
       } catch (error) {
         console.error("Failed to fetch initial data", error);
+      } finally {
+        setIsLoadingMessages(false);
       }
     };
 
@@ -302,11 +306,14 @@ function Chat() {
               justifyContent: "space-between",
             }}
           >
+            {/* <Box sx={{ flex: 1 }}> */}
+            {/* <LiquidGlassWrapper borderRadius={14} blur={7}> */}
             <GlassCard>
               <Box
                 sx={{
                   width: "800px",
                   height: "100%",
+                  minHeight: "75vh",
                   padding: "0 25px",
                   boxSizing: "border-box",
                   marginTop: "5px",
@@ -320,10 +327,13 @@ function Chat() {
                 <Box
                   sx={{
                     flex: 1,
-                    maxHeight: maxHeight,
-                    overflowY: "auto",
-                    overflowX: "hidden",
-                    "&::-webkit-scrollbar": { width: "6px" },
+                    maxHeight: "75vh",
+                    overflowY: "auto", // ⚡ CHỈ SCROLL DỌC
+                    overflowX: "hidden", // ⚡ KHÔNG CHO SCROLL NGANG
+
+                    "&::-webkit-scrollbar": {
+                      width: "6px",
+                    },
                     "&::-webkit-scrollbar-thumb": {
                       background: "rgba(0,0,0,0.5)",
                       borderRadius: "3px",
@@ -331,8 +341,10 @@ function Chat() {
                     "&::-webkit-scrollbar-thumb:hover": {
                       background: "rgba(0,0,0,0.8)",
                     },
-                    "&::-webkit-scrollbar-track": { background: "transparent" },
-                    scrollbarWidth: "thin",
+                    "&::-webkit-scrollbar-track": {
+                      background: "transparent",
+                    },
+                    scrollbarWidth: "thin", // Firefox
                     scrollbarColor: "rgba(0,0,0,0.5) transparent",
                   }}
                 >
@@ -524,6 +536,21 @@ function Chat() {
                 overflowY: "auto",
                 border: "1px solid #eee",
                 borderRadius: "8px",
+                "&::-webkit-scrollbar": {
+                  width: "6px",
+                },
+                "&::-webkit-scrollbar-thumb": {
+                  background: "rgba(0,0,0,0.5)",
+                  borderRadius: "3px",
+                },
+                "&::-webkit-scrollbar-thumb:hover": {
+                  background: "rgba(0,0,0,0.8)",
+                },
+                "&::-webkit-scrollbar-track": {
+                  background: "transparent",
+                },
+                scrollbarWidth: "thin", // Firefox
+                scrollbarColor: "rgba(0,0,0,0.5) transparent",
               }}
             >
               <List dense>
@@ -567,6 +594,21 @@ function Chat() {
                 overflowY: "auto",
                 border: "1px solid #eee",
                 borderRadius: "8px",
+                "&::-webkit-scrollbar": {
+                  width: "6px",
+                },
+                "&::-webkit-scrollbar-thumb": {
+                  background: "rgba(0,0,0,0.5)",
+                  borderRadius: "3px",
+                },
+                "&::-webkit-scrollbar-thumb:hover": {
+                  background: "rgba(0,0,0,0.8)",
+                },
+                "&::-webkit-scrollbar-track": {
+                  background: "transparent",
+                },
+                scrollbarWidth: "thin", // Firefox
+                scrollbarColor: "rgba(0,0,0,0.5) transparent",
               }}
             >
               <List dense>

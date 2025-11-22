@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import NoteAltIcon from '@mui/icons-material/NoteAlt';
 import {
@@ -60,8 +60,6 @@ interface FileMeta {
 
 const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
 
-
-  const [tab, setTab] = useState<"Note" | "Files" | "Chat">("Note");
   const [selectedNote, setSelectedNote] = useState<FileMeta | null>(null);
   const [notes, setNotes] = useState<FileMeta[]>([]);
 
@@ -85,6 +83,12 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
     router.push("/content/editor");
   }
 
+    const currentTab = useMemo(() => {
+      if (pathname.includes("/content/files")) return "Files";
+      if (pathname.includes("/content/chat")) return "Chat";
+      return "Note"; // Default
+    }, [pathname]);
+
   useEffect(() => {
     const fetchNotes = async () => {
       try {
@@ -102,19 +106,19 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
     fetchNotes();
   }, []);
 
-  useEffect(() => {
-    switch (pathname) {
-      case "/content/editor":
-        setTab("Note");
-        break;
-      case "/content/files":
-        setTab("Files");
-        break;
-      case "/content/chat":
-        setTab("Chat");
-        break;
+  const handleTabChange = (event: React.SyntheticEvent, newValue: string) => {
+    // Không setTab ở đây, chỉ điều hướng.
+    const target =
+      newValue === "Note"
+        ? "/content/editor"
+        : newValue === "Files"
+        ? "/content/files"
+        : "/content/chat";
+    
+    if (pathname !== target) {
+      router.push(target);
     }
-  },[pathname]);
+  };
 
   return (
     <Drawer
@@ -176,20 +180,8 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
 
             {/* Tabs category */}
             <Tabs
-              value={tab}
-              onChange={(e, v) => {
-                setTab(v);
-
-                const target =
-                  v === "Note"
-                    ? "/content/editor"
-                    : v === "Files"
-                    ? "/content/files"
-                    : "/content/chat";
-
-                // ⚡ Check nếu đang ở trang đó rồi thì không chuyển
-                if (pathname !== target) router.push(target as any);
-              }}
+              value={currentTab}
+              onChange={handleTabChange}
               TabIndicatorProps={{ style: { backgroundColor: "black" } }}
               sx={{
                 mb: 2,
@@ -235,7 +227,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
             {/* Nội dung thay đổi theo tab */}
               {/* Note List */}
                 <List>
-                  {tab === "Note" && 
+                  {currentTab === "Note" && 
                   <Button 
                         onClick={() => handleCreateNote()}
                         startIcon={<NoteAltIcon sx={{ fontSize: 22 }} />}
@@ -270,7 +262,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
                         Create Note
                       </Button>
                   }
-                  {tab === "Note" && 
+                  {currentTab === "Note" && 
                   notes.map((item , index ) => (
                     <ListItemButton
                       className={selectedNote?.etag === item.etag ? "selected" : ""}
@@ -291,7 +283,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
                     </ListItemButton>
                   ))}
 
-                    {tab === "Files" && 
+                    {currentTab === "Files" && 
                     <>
                       <CustomButton onClick={() => setIsDialogOpen(true)} startIcon={<CloudUploadIcon sx={{ fontSize: 22 }} />}>Upload File</CustomButton>
                       <DialogUpload open={isDialogOpen} onClose={() => setIsDialogOpen(false)} />

@@ -138,8 +138,12 @@ const TextEditor = ({ content }: any) => {
     const fetchData = async () => {
       try {
         const [sourcesRes, notesRes] = await Promise.all([
-          fetch("http://49.50.137.210:5055/api/sources"),
-          fetch("http://49.50.137.210:5055/api/notes"),
+          fetch(
+            "https://offerings-afford-adjusted-observations.trycloudflare.com/api/sources"
+          ),
+          fetch(
+            "https://offerings-afford-adjusted-observations.trycloudflare.com/api/notes"
+          ),
         ]);
 
         const sourcesData: SourceItem[] = await sourcesRes.json();
@@ -230,11 +234,14 @@ const TextEditor = ({ content }: any) => {
       };
 
       // 5. POST request
-      const res = await fetch("http://49.50.137.210:5055/api/chat/sessions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const res = await fetch(
+        "https://offerings-afford-adjusted-observations.trycloudflare.com/api/chat/sessions",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
 
       const data = await res.json();
 
@@ -316,13 +323,16 @@ const TextEditor = ({ content }: any) => {
       // console.log("session id", createNewChatSession());
       console.log("JSON payload", JSON.stringify(payload));
       // --- 3. CALL API ---
-      const res = await fetch("http://49.50.137.210:5055/api/chat/execute", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+      const res = await fetch(
+        "https://offerings-afford-adjusted-observations.trycloudflare.com/api/chat/execute",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        }
+      );
 
       const data = await res.json();
 

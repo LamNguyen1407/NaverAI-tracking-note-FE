@@ -40,6 +40,8 @@ import {
 import { toast } from "react-toastify"; // Import toastify
 // --- 1. Types definitions based on New JSON ---
 
+import { SourceItem, SimpleSource, NoteItem } from "@/type/source/Source";
+
 interface ConflictItem {
   new_note_sentence: string;
   evidence_from_sources: string[];
@@ -113,20 +115,6 @@ import {
 } from "@mdxeditor/editor";
 import { initialMarkdown } from "./initialMarkdown";
 
-// --- Types cho Mock Data ---
-interface VerificationResult {
-  id: string;
-  type: "manual";
-  status: "loading" | "conflict" | "safe";
-  message: string;
-  selectedTextPreview?: string;
-  timestamp: string;
-
-  rawText?: string; // nội dung người dùng select (để hiển thị row 2)
-  sources?: string[]; // danh sách nguồn API trả về
-  expanded?: boolean; // state để toggle mở/đóng
-}
-
 const TextEditor = ({ content }: any) => {
   const [markdown, setMarkdown] = useState(content || initialMarkdown);
   const [showSidebar, setShowSidebar] = useState(true);
@@ -141,39 +129,43 @@ const TextEditor = ({ content }: any) => {
   const [showSourceMenu, setShowSourceMenu] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [allSources, setAllSources] = useState([
-    { id: "1", name: "Lecture_History.pdf" },
-    { id: "2", name: "Augustus_Bio.docx" },
+  const [allSources, setAllSources] = useState<SimpleSource[]>([]);
 
-    { id: "4", name: "Data mining.pdf" },
-    { id: "5", name: "Machine learning.docx" },
-    { id: "6", name: "Computer vision.txt" },
+  useEffect(() => {
+    // Chỉ fetch khi menu được mở
+    if (!showSourceMenu) return;
 
-    { id: "7", name: "Quantum_Physics_Intro.pdf" },
-    { id: "8", name: "Roman_Empire_Trade_Routes.docx" },
-    { id: "9", name: "NeuralNetworks_Notes.txt" },
-    { id: "10", name: "Algorithms_Design.pdf" },
-    { id: "11", name: "Blockchain_Fundamentals.docx" },
-    { id: "12", name: "Genetics_and_Evolution.pdf" },
+    const fetchData = async () => {
+      try {
+        const [sourcesRes, notesRes] = await Promise.all([
+          fetch("http://49.50.137.210:5055/api/sources"),
+          fetch("http://49.50.137.210:5055/api/notes"),
+        ]);
 
-    { id: "14", name: "CyberSecurity_Checklist.txt" },
-    { id: "15", name: "Deep_Learning_Course.pdf" },
-    { id: "16", name: "Database_Systems_Overview.docx" },
-    { id: "17", name: "OperatingSystems_Notes.txt" },
-    { id: "18", name: "Medieval_Warfare.pdf" },
+        const sourcesData: SourceItem[] = await sourcesRes.json();
+        const notesData: NoteItem[] = await notesRes.json();
 
-    { id: "20", name: "Linear_Algebra_Summary.pdf" },
-    { id: "21", name: "Human_Anatomy_Ref.docx" },
-    { id: "22", name: "Astronomy_Stars_and_Galaxies.pdf" },
-    { id: "23", name: "Environmental_Science_Intro.docx" },
-    { id: "24", name: "Ethics_in_AI.txt" },
-    { id: "25", name: "Compiler_Design.pdf" },
+        // Map sources -> SimpleSource
+        const mappedSources: SimpleSource[] = sourcesData.map((item) => ({
+          id: item.id,
+          name: item.title,
+        }));
 
-    { id: "27", name: "Probability_Theory_Basics.pdf" },
-    { id: "28", name: "Sociology_HumanBehavior.docx" },
-    { id: "29", name: "Philosophy_Stoicism_Notes.txt" },
-    { id: "30", name: "Renaissance_Art_History.pdf" },
-  ]);
+        // Map notes -> SimpleSource (fallback nếu title null)
+        const mappedNotes: SimpleSource[] = notesData.map((note) => ({
+          id: note.id,
+          name: note.title ?? note.content.substring(0, 30) + "...",
+        }));
+
+        setAllSources([...mappedSources, ...mappedNotes]);
+      } catch (error) {
+        console.error("Error fetching sources/notes:", error);
+      }
+    };
+
+    fetchData();
+  }, [showSourceMenu]);
+
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const handleToggleSource = (id: string) => {
@@ -213,127 +205,198 @@ const TextEditor = ({ content }: any) => {
     fetchHistory();
   }, []); // Chạy 1 lần khi mount
 
-  const simulateApiCall = ({ selectedText }: any) => {
-    setLoading(true);
+  const createNewChatSession = async (): Promise<string> => {
+    const DEFAULT_SESSION = "chat_session:2dxvblmr1bgyv66753r6";
 
-    setTimeout(() => {
-      // MOCK RESPONSE TỪ AI
-      const apiResponse: AIResponse = {
-        conflicts: [
-          {
-            new_note_sentence:
-              "Bộ ba Tam đầu chế đầu tiên. Đây là một thỏa thuận bí mật giữa ba người đàn ông quyền lực nhất lúc bấy giờ: Julius Caesar, Pompey Đại đế, và Augustus.",
-            evidence_from_sources: [
-              "Bộ ba Tam đầu chế đầu tiên gồm Caesar, Pompey và Crassus.",
-            ],
-            reason:
-              "Augustus không thuộc Bộ ba Tam đầu chế đầu tiên; thay vì Augustus, người là thừa kế của Caesar, một phần của liên minh là Crassus.",
-            suggested_rewrite:
-              "Bộ ba Tam đầu chế đầu tiên gồm Julius Caesar, Pompey Đại đế và Marcus Licinius Crassus.",
-          },
-          {
-            new_note_sentence:
-              "Augustus đã bị giết trong một trận chiến ở phía Đông, chống lại người Hy Lạp, vào khoảng năm 53 TCN.",
-            evidence_from_sources: [
-              "Crassus bị tiêu diệt tại Trận Carrhae (53 TCN)...",
-            ],
-            reason:
-              "Không Augustus mà Crassus là người chết tại thời điểm này.",
-            suggested_rewrite:
-              "Marcus Licinius Crassus đã bị tiêu diệt tại Trận Carrhae ở phía Đông vào năm 53 TCN.",
-          },
-          {
-            new_note_sentence:
-              "Caesar được giết vào ngày Ides of March (15 tháng 3), năm 49 TCN...",
-            evidence_from_sources: [
-              "Caesar bị ám sát vào ngày Ides of March năm 44 TCN.",
-            ],
-            reason: "Năm ám sát Caesar là 44 TCN, không 49 TCN.",
-            suggested_rewrite:
-              "Caesar được giết vào ngày Ides of March năm 44 TCN.",
-          },
-        ],
-        improvements: [
-          {
-            new_note_sentence:
-              "Caesar vượt sông Rubicon cùng với quân đoàn của mình vào năm 49 TCN, nói lời 'Alea iacta est', mở đầu cuộc nội chiến chống lại Pompey.",
-            missing_context:
-              "Câu 'Alea iacta est' (con xúc xắc đã được gieo) là một víêt quan trọng của Caesar khi vượt sông Rubicon.",
-            suggested_addition:
-              "Caesar vượt sông Rubicon cùng với quân đoàn và nói lời 'Alea iacta est', mở đầu cuộc nội chiến chống lại Pompey.",
-          },
-        ],
-        hallucinations: [
-          {
-            new_note_sentence:
-              "Augustus là hoàng đế đầu tiên, nhưng ông ta đủ thông minh để không bao giờ tự gọi mình như vậy.",
-            reason:
-              "Augustus thực sự xác nhận danh hiệu 'Augustus' và 'Imperator'.",
-            suggested_rewrite:
-              "Augustus giữ danh hiệu 'Augustus' và 'Princeps', nhưng quyền lực thực tế của ông ta khởi đầu Đế chế La Mã.",
-          },
-          {
-            new_note_sentence:
-              "Ông ta tuyên bố từ bỏ tất cả quyền lực phi thường của mình và trao lại quyền lực cho Thượng viện và Nhân dân Rome.",
-            reason:
-              "Augustus giữ quyền lực thực tế thông qua các danh hiệu cộng hòa (tribunician power, imperium).",
-            suggested_rewrite:
-              "Augustus giữ quyền lực thực tế thông qua các danh hiệu cộng hòa và kiểm soát quân đội, dưới bức màn 'phục hồi cộng hòa'.",
-          },
-        ],
-        summary:
-          "Note có nhiều lỗi: Augustus không thuộc Bộ ba Tam đầu chế đầu tiên, Crassus chết tại Carrhae, Caesar bị giết năm 44 TCN. Cần sửa nhân vật và lịch sử. Cũng cần chỉ ra rằng Augustus giữ quyền lực thực tế dưới dạng 'phục hồi cộng hòa'.",
+    try {
+      // 1. Two notebook IDs
+      const notebooks = [
+        "notebook:x5mhge9y5hqja6hdx3hr", // Notebook 1
+        "notebook:klm3p8l0munx5vcou7ww", // Notebook 2
+      ];
+
+      // 2. Random pick
+      const randomIndex = Math.floor(Math.random() * notebooks.length);
+      const notebookId = notebooks[randomIndex];
+
+      // 3. Notebook number for title
+      const notebookNumber = randomIndex + 1;
+      const title = `Notebook ${notebookNumber} - Main screen verify`;
+
+      // 4. Payload
+      const payload = {
+        notebook_id: notebookId,
+        title,
       };
 
-      // --- TRANSFORM DATA ---
-      // Chuyển đổi JSON cục thành mảng phẳng để render list
+      // 5. POST request
+      const res = await fetch("http://49.50.137.210:5055/api/chat/sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (data?.id) {
+        return data.id; // → success
+      }
+
+      // If API responds without id
+      return DEFAULT_SESSION;
+    } catch (err) {
+      console.error("Error creating chat session:", err);
+      return DEFAULT_SESSION; // fallback
+    }
+  };
+
+  function safeJsonParse(jsonString: string): any {
+    try {
+      return JSON.parse(jsonString);
+    } catch (err1) {
+      console.warn("JSON failed, applying auto-fix...");
+
+      // 1. Replace smart quotes
+      let fixed = jsonString.replace(/[“”]/g, '"');
+
+      // 2. Escape ALL naked quotes inside values
+      fixed = fixed.replace(/"(.*?[^\\])"(?!\s*[:,}\]])/g, (match) => {
+        // convert "abc" → \"abc\"
+        return match.replace(/"/g, '\\"');
+      });
+
+      // 3. Attempt second parse
+      try {
+        return JSON.parse(fixed);
+      } catch (err2) {
+        console.error("Auto-fix JSON failed:", err2);
+        console.log("BROKEN JSON:", jsonString);
+        console.log("FIXED JSON:", fixed);
+
+        // Fallback
+        return {
+          conflicts: [],
+          improvements: [],
+          hallucinations: [],
+          summary: "",
+        };
+      }
+    }
+  }
+
+  const chatWithHCX007 = async (
+    selectedText: string,
+    selectedIds: string[]
+  ) => {
+    setLoading(true);
+
+    try {
+      // --- 1. SPLIT IDs into sources[] & notes[] ---
+      const sourceIds = selectedIds
+        .filter((id) => id.startsWith("source:"))
+        .map((id) => ({ id }));
+
+      const noteIds = selectedIds
+        .filter((id) => id.startsWith("note:"))
+        .map((id) => ({ id }));
+
+      const newSessionId = await createNewChatSession();
+
+      // --- 2. PAYLOAD ---
+      const payload = {
+        session_id: newSessionId,
+        message: selectedText,
+        context: {
+          sources: sourceIds,
+          notes: noteIds,
+        },
+        model_override: "model:emxe6du3v4125f8ss7ti",
+      };
+
+      // console.log("session id", createNewChatSession());
+      console.log("JSON payload", JSON.stringify(payload));
+      // --- 3. CALL API ---
+      const res = await fetch("http://49.50.137.210:5055/api/chat/execute", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      console.log("RAW API RESPONSE:", data);
+
+      // --- 4. Extract AI response JSON from messages ---
+      const aiMessage = data.messages?.find((m: any) => m.type === "ai");
+
+      if (!aiMessage) {
+        console.error("No AI message found in response.");
+        toast.error("API returned an error.", { position: "top-right" });
+
+        setLoading(false);
+        return;
+      }
+
+      // AI trả JSON dưới dạng string → parse lại
+      const parsed = safeJsonParse(aiMessage.content);
+
+      console.log("PARSED AI JSON:", parsed);
+
+      // --- 5. TRANSFORM TO UnifiedResultItem[] ---
       const newItems: UnifiedResultItem[] = [];
 
-      // 1. Process Conflicts
-      apiResponse.conflicts.forEach((item) => {
+      // 5.1 Conflicts
+      parsed.conflicts?.forEach((item: any) => {
         newItems.push({
-          id: Math.random().toString(36).substr(2, 9),
+          id: crypto.randomUUID(),
           type: "conflict",
-          displayMessage: "Detected Contradiction", // Message ngắn gọn
+          displayMessage: "Detected Contradiction",
           sentence: item.new_note_sentence,
           reason: item.reason,
           suggestion: item.suggested_rewrite,
-          sources: item.evidence_from_sources,
+          sources: item.evidence_from_sources ?? [],
           expanded: false,
         });
       });
 
-      // 2. Process Improvements
-      apiResponse.improvements.forEach((item) => {
+      // 5.2 Improvements
+      parsed.improvements?.forEach((item: any) => {
         newItems.push({
-          id: Math.random().toString(36).substr(2, 9),
+          id: crypto.randomUUID(),
           type: "improvement",
-          displayMessage: "Context Suggestion", // Message ngắn gọn
+          displayMessage: "Context Suggestion",
           sentence: item.new_note_sentence,
-          reason: item.missing_context, // Map missing_context vào reason để hiển thị
+          reason: item.missing_context,
           suggestion: item.suggested_addition,
           sources: [],
           expanded: false,
         });
       });
 
-      // 3. Process Hallucinations
-      apiResponse.hallucinations.forEach((item) => {
+      // 5.3 Hallucinations
+      parsed.hallucinations?.forEach((item: any) => {
         newItems.push({
-          id: Math.random().toString(36).substr(2, 9),
+          id: crypto.randomUUID(),
           type: "hallucination",
-          displayMessage: "Unverified Info", // Message ngắn gọn
+          displayMessage: "Unverified Info",
           sentence: item.new_note_sentence,
           reason: item.reason,
           suggestion: item.suggested_rewrite,
-          sources: [], // Hallucination thường ko có source chứng minh (vì tìm ko thấy)
+          sources: [],
           expanded: false,
         });
       });
 
+      // --- 6. UPDATE UI ---
       setResults((prev) => [...newItems, ...prev]);
-      setLoading(false);
-    }, 1500);
+    } catch (error) {
+      console.error("Error calling API:", error);
+      toast.error("API returned an error.", { position: "top-right" });
+    }
+
+    setLoading(false);
   };
 
   // Helper toggle expand
@@ -365,7 +428,10 @@ const TextEditor = ({ content }: any) => {
         position: "top-right",
       });
     }
-    simulateApiCall(selectedText);
+
+    // console.log("selectedText", selectedText);
+    // console.log("selectedIds", selectedIds);
+    chatWithHCX007(selectedText, selectedIds);
   };
 
   // Hàm xóa card
@@ -538,7 +604,9 @@ const TextEditor = ({ content }: any) => {
                 variant="contained"
                 size="small"
                 onClick={() => setShowSourceMenu(!showSourceMenu)}
-                startIcon={<SourceIcon />}
+                startIcon={
+                  showSourceMenu ? <ExpandLessIcon /> : <ExpandMoreIcon />
+                }
                 sx={{
                   textTransform: "none",
                   fontWeight: "bold",
@@ -557,7 +625,7 @@ const TextEditor = ({ content }: any) => {
                   sx={{
                     position: "absolute",
                     top: "115%",
-                    right: 0,
+                    right: "20%",
                     width: 280,
                     maxHeight: 350,
                     // overflow: "hidden",
@@ -628,12 +696,18 @@ const TextEditor = ({ content }: any) => {
                 variant="contained"
                 size="small"
                 onClick={handleCheckSelection}
-                startIcon={<CheckCircleOutlineIcon />}
+                startIcon={
+                  loading ? (
+                    <CircularProgress size={18} thickness={5} />
+                  ) : (
+                    <CheckCircleOutlineIcon />
+                  )
+                }
                 sx={{
                   textTransform: "none",
                   fontWeight: "bold",
                   backdropFilter: "blur(4px)",
-                  bgcolor: loading ? "warning.main" : "primary.main",
+                  bgcolor: loading ? "grey.500" : "primary.main",
                   boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
                   borderRadius: "15px",
                   "&:hover": {

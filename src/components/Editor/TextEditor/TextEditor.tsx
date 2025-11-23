@@ -153,7 +153,7 @@ const TextEditor = ({ content }: any) => {
 
   const { triggerReloadNote } = useFileStore();
 
-  const {user_id} = useUserStore();
+  const { user_id } = useUserStore();
 
   const handleEditorChange = (newMarkdown: string) => {
     setMarkdown(newMarkdown);
@@ -232,7 +232,7 @@ const TextEditor = ({ content }: any) => {
         const sessionId = "chat_session:9cikcp23p2itm1npo4jq";
 
         const response = await fetch(
-          `http://49.50.137.210:5055/api/chat/sessions/${sessionId}`
+          `https://offerings-afford-adjusted-observations.trycloudflare.com/api/chat/sessions/${sessionId}`
         );
 
         const data = await response.json();
@@ -615,10 +615,13 @@ const TextEditor = ({ content }: any) => {
 
       // ---- 3. Chạy song song 2 API ----
       await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_API}/files/upload/note?user_id=${user_id}`, {
-          method: "POST",
-          body: formData,
-        }),
+        fetch(
+          `${process.env.NEXT_PUBLIC_API}/files/upload/note?user_id=${user_id}`,
+          {
+            method: "POST",
+            body: formData,
+          }
+        ),
         fetch(`${process.env.NEXT_PUBLIC_API_NOTEBOOK}/api/notes`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },

@@ -232,7 +232,7 @@ const TextEditor = ({ content }: any) => {
         const sessionId = "chat_session:9cikcp23p2itm1npo4jq";
 
         const response = await fetch(
-          `http://49.50.137.210:5055/api/chat/sessions/${sessionId}`
+          `https://offerings-afford-adjusted-observations.trycloudflare.com/api/chat/sessions/${sessionId}`
         );
 
         const data = await response.json();

@@ -13,7 +13,6 @@ import {
 import { useState } from "react";
 import { toast } from "react-toastify";
 
-
 interface DialogUploadProps {
   open: boolean;
   onClose: () => void;
@@ -21,10 +20,7 @@ interface DialogUploadProps {
   setIsLoading?: (value: boolean) => void;
 }
 
-const DialogUpload = ({
-  open,
-  onClose,
-}: DialogUploadProps) => {
+const DialogUpload = ({ open, onClose }: DialogUploadProps) => {
   const [tab, setTab] = useState(0);
 
   const [isLoadingFile, setIsLoadingFile] = useState(false);
@@ -38,8 +34,7 @@ const DialogUpload = ({
   const [url, setUrl] = useState("");
 
   const triggerReload = useFileStore((state) => state.triggerReload);
-  const {user_id} = useUserStore()
-  
+  const { user_id } = useUserStore();
 
   const handleTabChange = (e: React.SyntheticEvent, newValue: number) => {
     setTab(newValue);
@@ -47,7 +42,7 @@ const DialogUpload = ({
 
   // ----------- UPLOAD FILE --------------
 
-    const handleUploadFile = async (file: File | null) => {
+  const handleUploadFile = async (file: File | null) => {
     if (!file) return;
 
     // Validate extension
@@ -56,20 +51,23 @@ const DialogUpload = ({
     // Document
     const documentExtensions = ["pdf", "doc", "docx"];
     const documentMime = [
-        "application/pdf",
-        "application/msword",
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     ];
 
     //Media
     const mediaExtensions = ["mp4", "m4a"];
 
-    const isDocument = ext && documentExtensions.includes(ext) && documentMime.includes(file.type);
+    const isDocument =
+      ext &&
+      documentExtensions.includes(ext) &&
+      documentMime.includes(file.type);
     const isMedia = ext && mediaExtensions.includes(ext);
 
-    if(!isDocument && !isMedia) {
-        toast.error("Chỉ được upload file PDF, DOC/DOCX hoặc MP4/M4A");
-        return;
+    if (!isDocument && !isMedia) {
+      toast.error("Chỉ được upload file PDF, DOC/DOCX hoặc MP4/M4A");
+      return;
     }
 
     // Prepare form data
@@ -84,131 +82,135 @@ const DialogUpload = ({
     formDataNotebook.append("async_processing", "true");
 
     try {
-        setIsLoadingFile(true);
+      setIsLoadingFile(true);
 
-        let resMinio: Response | null = null;
-        let resNotebook: Response | null = null;
+      let resMinio: Response | null = null;
+      let resNotebook: Response | null = null;
 
-        if (isDocument) {
+      if (isDocument) {
         // Call both APIs
         [resMinio, resNotebook] = await Promise.all([
-            fetch(`${process.env.NEXT_PUBLIC_API}/files/upload/document?user_id=${user_id}`, {
-            method: "POST",
-            body: formDataMinio,
-            }),
-            fetch(`${process.env.NEXT_PUBLIC_API_NOTEBOOK}/api/sources`, {
+          fetch(
+            `${process.env.NEXT_PUBLIC_API}/files/upload/document?user_id=${user_id}`,
+            {
+              method: "POST",
+              body: formDataMinio,
+            }
+          ),
+          fetch(`${process.env.NEXT_PUBLIC_API_NOTEBOOK}/api/sources`, {
             method: "POST",
             body: formDataNotebook,
-            }),
+          }),
         ]);
-        } else if (isMedia) {
+      } else if (isMedia) {
         // Only call Notebook API
         resNotebook = await fetch(
-            `${process.env.NEXT_PUBLIC_API_NOTEBOOK}/api/sources`,
-            {
+          `${process.env.NEXT_PUBLIC_API_NOTEBOOK}/api/sources`,
+          {
             method: "POST",
             body: formDataNotebook,
-            }
+          }
         );
-        }
+      }
 
-        // Parse response safely
-        const minioData = await resMinio?.json().catch(() => null);
-        const notebookData = await resNotebook?.json().catch(() => null);
+      // Parse response safely
+      const minioData = await resMinio?.json().catch(() => null);
+      const notebookData = await resNotebook?.json().catch(() => null);
 
-        // Check status
-        const minioSuccess = isDocument ? resMinio?.ok : true;
-        const notebookSuccess = resNotebook?.ok;
+      // Check status
+      const minioSuccess = isDocument ? resMinio?.ok : true;
+      const notebookSuccess = resNotebook?.ok;
 
-        if (!minioSuccess || !notebookSuccess) {
+      if (!minioSuccess || !notebookSuccess) {
         const errorMessage =
-            (minioData?.message && !minioSuccess && `Minio: ${minioData.message}`) ||
-            (notebookData?.message && !notebookSuccess && `Notebook: ${notebookData.message}`) ||
-            "Upload file failed";
+          (minioData?.message &&
+            !minioSuccess &&
+            `Minio: ${minioData.message}`) ||
+          (notebookData?.message &&
+            !notebookSuccess &&
+            `Notebook: ${notebookData.message}`) ||
+          "Upload file failed";
 
         throw new Error(errorMessage);
-        }
+      }
 
-        // All OK
-        toast.success("Upload file successful!");
-        triggerReload();
-        onClose();
-
+      // All OK
+      toast.success("Upload file successful!");
+      triggerReload();
+      onClose();
     } catch (error: any) {
-        console.error(error);
-        toast.error(error.message || "Upload file failed");
+      console.error(error);
+      toast.error(error.message || "Upload file failed");
     } finally {
-        setIsLoadingFile(false);
+      setIsLoadingFile(false);
     }
-    };
+  };
 
   // ----------- UPLOAD LINK --------------
-    const handleUploadLink = async (url: string) => {
-      try {
-        setIsLoadingLink(true);
-        const formLink = new FormData();
-        formLink.append("url", url);
-        formLink.append("type", "link");
-        formLink.append("embed", "true");
-        formLink.append("delete_source", "false");
-        formLink.append("async_processing", "true");
+  const handleUploadLink = async (url: string) => {
+    try {
+      setIsLoadingLink(true);
+      const formLink = new FormData();
+      formLink.append("url", url);
+      formLink.append("type", "link");
+      formLink.append("embed", "true");
+      formLink.append("delete_source", "false");
+      formLink.append("async_processing", "true");
 
-
-
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_NOTEBOOK}/api/sources`, {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_NOTEBOOK}/api/sources`,
+        {
           method: "POST",
           body: formLink,
-        });
-        if (!res.ok) {
-          const err = await res.json();
-          toast.error(err.detail || "Upload Link failed");
-          return;
         }
-        const result = await res.json();
-        toast.success(result.message || "Upload Link successful!");
-        onClose();
-      } catch (err) {
-        toast.error("An unexpected error occurred. Please try again.");
+      );
+      if (!res.ok) {
+        const err = await res.json();
+        toast.error(err.detail || "Upload Link failed");
+        return;
       }
-      finally {
-        setIsLoadingLink(false);
-      }
+      const result = await res.json();
+      toast.success(result.message || "Upload Link successful!");
+      onClose();
+    } catch (err) {
+      toast.error("An unexpected error occurred. Please try again.");
+    } finally {
+      setIsLoadingLink(false);
     }
+  };
 
   // ----------- UPLOAD TEXT --------------
-    const handleUploadText = async (content: string) => {
-      try {
-        setIsLoadingText(true);
-        const formText = new FormData();
-        formText.append("content", content);
-        formText.append("type", "text");
-        formText.append("embed", "true");
-        formText.append("delete_source", "false");
-        formText.append("async_processing", "true");
+  const handleUploadText = async (content: string) => {
+    try {
+      setIsLoadingText(true);
+      const formText = new FormData();
+      formText.append("content", content);
+      formText.append("type", "text");
+      formText.append("embed", "true");
+      formText.append("delete_source", "false");
+      formText.append("async_processing", "true");
 
-
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_NOTEBOOK}/api/sources`, {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_NOTEBOOK}/api/sources`,
+        {
           method: "POST",
           body: formText,
-        });
-        if (!res.ok) {
-          const err = await res.json();
-          toast.error(err.detail || "Upload Text failed");
-          return;
         }
-        const result = await res.json();
-        toast.success(result.message || "Upload Text successful!");
-        onClose();
-      } catch (err) {
-        toast.error("An unexpected error occurred. Please try again.");
+      );
+      if (!res.ok) {
+        const err = await res.json();
+        toast.error(err.detail || "Upload Text failed");
+        return;
       }
-      finally {
-        setIsLoadingText(false);
-      }
+      const result = await res.json();
+      toast.success(result.message || "Upload Text successful!");
+      onClose();
+    } catch (err) {
+      toast.error("An unexpected error occurred. Please try again.");
+    } finally {
+      setIsLoadingText(false);
     }
-
-
-
+  };
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
@@ -232,7 +234,12 @@ const DialogUpload = ({
               variant="outlined"
               onChange={(e) => setContent(e.target.value)}
             />
-            <Button disabled={isLoadingText} onClick={() => handleUploadText(content)} variant="contained" sx={{ mt: 2 }}>
+            <Button
+              disabled={isLoadingText}
+              onClick={() => handleUploadText(content)}
+              variant="contained"
+              sx={{ mt: 2 }}
+            >
               Confirm
             </Button>
           </Box>
@@ -248,7 +255,12 @@ const DialogUpload = ({
               variant="outlined"
               onChange={(e) => setUrl(e.target.value)}
             />
-            <Button disabled={isLoadingLink} onClick={() => handleUploadLink(url)} variant="contained" sx={{ mt: 2 }}>
+            <Button
+              disabled={isLoadingLink}
+              onClick={() => handleUploadLink(url)}
+              variant="contained"
+              sx={{ mt: 2 }}
+            >
               Confirm Link
             </Button>
           </Box>
@@ -257,7 +269,11 @@ const DialogUpload = ({
         {/* TAB 3: Upload File */}
         {tab === 2 && (
           <Box>
-            <Button variant="contained" component="label" disabled={isLoadingFile}>
+            <Button
+              variant="contained"
+              component="label"
+              disabled={isLoadingFile}
+            >
               {isLoadingFile ? "Uploading..." : "Upload File"}
               <input
                 type="file"

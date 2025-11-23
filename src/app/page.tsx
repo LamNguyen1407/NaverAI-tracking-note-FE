@@ -107,7 +107,12 @@ export default function HeroSection() {
           />
 
           <motion.button
-            onClick={() => window.open("https://google.com", "_blank")}
+            onClick={() =>
+              window.open(
+                "https://github.com/giaNguyen214/NAVER-Extension.git",
+                "_blank"
+              )
+            }
             initial={{ opacity: 0, x: -40 }} // ← từ trái đi ra
             animate={{ opacity: 1, x: 0 }} // → cùng timeline START
             transition={{

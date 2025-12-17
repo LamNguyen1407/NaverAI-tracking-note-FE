@@ -8,6 +8,11 @@ import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
 import LinkIcon from "@mui/icons-material/Link";
 import ArticleIcon from "@mui/icons-material/Article";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome"; // Hoặc icon này cho đẹp
+
+const systemPrompt = await fetch("/prompts/factual_check.txt").then((r) =>
+  r.text()
+);
+
 // Hàm lấy ID video từ link youtube bất kỳ
 const getYoutubeId = (url: any) => {
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
@@ -184,9 +189,10 @@ const TextEditor = ({ content }: any) => {
   const [relations, setRelations] = useState<any[]>([]); // Mặc định là mảng rỗng
   const [isLoadingRelated, setIsLoadingRelated] = useState(false);
 
+  const notebook_id = localStorage.getItem("notebook_id");
+
   const getSourcesListAndString = async () => {
-    const url =
-      "https://offerings-afford-adjusted-observations.trycloudflare.com/api/sources";
+    const url = `${process.env.NEXT_PUBLIC_API_NOTEBOOK}/api/sources`;
 
     try {
       const res = await fetch(url);
@@ -211,7 +217,7 @@ const TextEditor = ({ content }: any) => {
       const list: any = [];
 
       for (const item of selected) {
-        const insightsUrl = `https://offerings-afford-adjusted-observations.trycloudflare.com/api/sources/${item.id}/insights`;
+        const insightsUrl = `${process.env.NEXT_PUBLIC_API_NOTEBOOK}/api/sources/${item.id}/insights`;
 
         let insightContent: any = null;
 
@@ -364,12 +370,8 @@ const TextEditor = ({ content }: any) => {
     const fetchData = async () => {
       try {
         const [sourcesRes, notesRes] = await Promise.all([
-          fetch(
-            "https://offerings-afford-adjusted-observations.trycloudflare.com/api/sources"
-          ),
-          fetch(
-            "https://offerings-afford-adjusted-observations.trycloudflare.com/api/notes"
-          ),
+          fetch(`${process.env.NEXT_PUBLIC_API_NOTEBOOK}/api/sources`),
+          fetch(`${process.env.NEXT_PUBLIC_API_NOTEBOOK}/api/notes`),
         ]);
 
         const sourcesData: SourceItem[] = await sourcesRes.json();
@@ -419,7 +421,7 @@ const TextEditor = ({ content }: any) => {
         const sessionId = "chat_session:9cikcp23p2itm1npo4jq";
 
         const response = await fetch(
-          `https://offerings-afford-adjusted-observations.trycloudflare.com/api/chat/sessions/${sessionId}`
+          `${process.env.NEXT_PUBLIC_API_NOTEBOOK}/api/chat/sessions/${sessionId}`
         );
 
         const data = await response.json();
@@ -434,7 +436,8 @@ const TextEditor = ({ content }: any) => {
         }
 
         // Parse JSON từ AI
-        const parsed = safeJsonParse(aiMessage.content);
+        // const parsed = safeJsonParse(aiMessage.content);
+        const parsed = robustJsonParse(aiMessage.content);
 
         console.log("PARSED AI JSON:", parsed);
 
@@ -496,13 +499,13 @@ const TextEditor = ({ content }: any) => {
   }, []);
 
   const createNewChatSession = async (): Promise<string> => {
-    const DEFAULT_SESSION = "chat_session:2dxvblmr1bgyv66753r6";
+    const DEFAULT_SESSION = "chat_session:2ggjs302tkgpeuzpurod";
 
     try {
       // 1. Two notebook IDs
       const notebooks = [
-        "notebook:gb6cvzqq7py3wqevpx7k", // Notebook 4
-        "notebook:vl1ipbnofi3rdhff3c7v", // Notebook 5
+        "notebook:j75mhkcvh5544g9pb7w1", // Notebook 4
+        "notebook:ppyrds4wad0ph0k4nvy7", // Notebook 5
       ];
 
       // 2. Random pick
@@ -521,7 +524,7 @@ const TextEditor = ({ content }: any) => {
 
       // 5. POST request
       const res = await fetch(
-        "https://offerings-afford-adjusted-observations.trycloudflare.com/api/chat/sessions",
+        `${process.env.NEXT_PUBLIC_API_NOTEBOOK}/api/chat/sessions`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -543,37 +546,121 @@ const TextEditor = ({ content }: any) => {
     }
   };
 
-  function safeJsonParse(jsonString: string): any {
+  // function safeJsonParse(jsonString: string): any {
+  //   try {
+  //     return JSON.parse(jsonString);
+  //   } catch (err1) {
+  //     console.warn("JSON failed, applying auto-fix...");
+
+  //     // 1. Replace smart quotes
+  //     let fixed = jsonString.replace(/[“”]/g, '"');
+
+  //     // 2. Escape ALL naked quotes inside values
+  //     fixed = fixed.replace(/"(.*?[^\\])"(?!\s*[:,}\]])/g, (match) => {
+  //       // convert "abc" → \"abc\"
+  //       return match.replace(/"/g, '\\"');
+  //     });
+
+  //     // 3. Attempt second parse
+  //     try {
+  //       return JSON.parse(fixed);
+  //     } catch (err2) {
+  //       console.error("Auto-fix JSON failed:", err2);
+  //       console.log("BROKEN JSON:", jsonString);
+  //       console.log("FIXED JSON:", fixed);
+
+  //       // Fallback
+  //       return {
+  //         conflicts: [],
+  //         improvements: [],
+  //         hallucinations: [],
+  //         summary: "",
+  //       };
+  //     }
+  //   }
+  // }
+
+  function robustJsonParse(input: string) {
+    const fallback = {
+      conflicts: [],
+      improvements: [],
+      hallucinations: [],
+      summary: "",
+    };
     try {
-      return JSON.parse(jsonString);
-    } catch (err1) {
-      console.warn("JSON failed, applying auto-fix...");
+      return JSON.parse(input);
+    } catch {}
 
-      // 1. Replace smart quotes
-      let fixed = jsonString.replace(/[“”]/g, '"');
+    console.warn("JSON failed, applying auto-fix...");
+    console.log("BROKEN JSON:", input);
 
-      // 2. Escape ALL naked quotes inside values
-      fixed = fixed.replace(/"(.*?[^\\])"(?!\s*[:,}\]])/g, (match) => {
-        // convert "abc" → \"abc\"
-        return match.replace(/"/g, '\\"');
-      });
+    let s = String(input || "").trim();
 
-      // 3. Attempt second parse
-      try {
-        return JSON.parse(fixed);
-      } catch (err2) {
-        console.error("Auto-fix JSON failed:", err2);
-        console.log("BROKEN JSON:", jsonString);
-        console.log("FIXED JSON:", fixed);
+    // drop markdown fences anywhere
+    s = s
+      .replace(/```(?:json)?/gi, "")
+      .replace(/```/g, "")
+      .trim();
 
-        // Fallback
-        return {
-          conflicts: [],
-          improvements: [],
-          hallucinations: [],
-          summary: "",
-        };
+    // if HTML/error page
+    if (/^\s*<(?:!doctype|html)\b/i.test(s)) {
+      console.log("FIXED JSON:", s);
+      return fallback;
+    }
+
+    // keep only the first balanced {...} (works even if extra junk after)
+    const start = s.indexOf("{");
+    if (start >= 0) {
+      let depth = 0,
+        inStr = false,
+        esc = false,
+        end = -1;
+      for (let i = start; i < s.length; i++) {
+        const c = s[i];
+        if (inStr) {
+          if (esc) esc = false;
+          else if (c === "\\") esc = true;
+          else if (c === '"') inStr = false;
+        } else {
+          if (c === '"') inStr = true;
+          else if (c === "{") depth++;
+          else if (c === "}") {
+            depth--;
+            if (depth === 0) {
+              end = i;
+              break;
+            }
+          }
+        }
       }
+      if (end > start) s = s.slice(start, end + 1).trim();
+    }
+
+    // fix the exact Gemini artifact: \"key\": and : \"value\"
+    s = s.replace(/\\"([^"\\]+)\\"\s*:/g, '"$1":');
+    s = s.replace(
+      /:\s*\\"([\s\S]*?)\\"(?=\s*[,\}])/g,
+      (_m, g1) => ': "' + String(g1).replace(/\\"/g, '"') + '"'
+    );
+    s = s.replace(/[“”]/g, '"');
+
+    console.log("FIXED JSON:", s);
+
+    try {
+      const obj = JSON.parse(s);
+      const parsed = {
+        conflicts: Array.isArray(obj?.conflicts) ? obj.conflicts : [],
+        improvements: Array.isArray(obj?.improvements) ? obj.improvements : [],
+        hallucinations: Array.isArray(obj?.hallucinations)
+          ? obj.hallucinations
+          : [],
+        summary: typeof obj?.summary === "string" ? obj.summary : "",
+      };
+      console.log("PARSED AI JSON:", parsed);
+      return parsed;
+    } catch (err) {
+      console.error("Auto-fix JSON failed:", err);
+      return fallback;
     }
   }
 
@@ -596,29 +683,46 @@ const TextEditor = ({ content }: any) => {
       const newSessionId = await createNewChatSession();
 
       // --- 2. PAYLOAD ---
+      const fullMessage = `
+        [SYSTEM INSTRUCTION - MUST FOLLOW EXACTLY]
+        ${systemPrompt}
+
+        ---
+        [USER INPUT - ANALYZE ONLY THIS]
+        ${selectedText}
+        `;
+
       const payload = {
         session_id: newSessionId,
-        message: selectedText,
+        message: fullMessage,
         context: {
           sources: sourceIds,
           notes: noteIds,
         },
-        model_override: "model:emxe6du3v4125f8ss7ti",
+        model_override: "model:kv3pmgczupuc15whfoe8",
       };
 
       // console.log("session id", createNewChatSession());
       console.log("JSON payload", JSON.stringify(payload));
       // --- 3. CALL API ---
-      const res = await fetch(
-        "https://offerings-afford-adjusted-observations.trycloudflare.com/api/chat/execute",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        }
-      );
+      // const res = await fetch(
+      //   `${process.env.NEXT_PUBLIC_API_NOTEBOOK}/api/chat/execute`,
+      //   {
+      //     method: "POST",
+      //     headers: {
+      //       "Content-Type": "application/json",
+      //     },
+      //     body: JSON.stringify(payload),
+      //   }
+      // );
+
+      const res = await fetch("/api/chat/execute", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
       const data = await res.json();
 
@@ -629,14 +733,18 @@ const TextEditor = ({ content }: any) => {
 
       if (!aiMessage) {
         console.error("No AI message found in response.");
-        toast.error("API returned an error.", { position: "top-right" });
+        toast.error(
+          "API AI đã hết quota. Vui lòng thử lại sau hoặc đổi model.",
+          { position: "top-right" }
+        );
 
         setLoading(false);
         return;
       }
 
       // AI trả JSON dưới dạng string → parse lại
-      const parsed = safeJsonParse(aiMessage.content);
+      // const parsed = safeJsonParse(aiMessage.content);
+      const parsed = robustJsonParse(aiMessage.content);
 
       console.log("PARSED AI JSON:", parsed);
 
@@ -697,7 +805,9 @@ const TextEditor = ({ content }: any) => {
       saveToSupabase(user_id, newSessionId);
     } catch (error) {
       console.error("Error calling API:", error);
-      toast.error("API returned an error.", { position: "top-right" });
+      toast.error("API AI đã hết quota. Vui lòng thử lại sau hoặc đổi model.", {
+        position: "top-right",
+      });
     }
 
     setLoading(false);
@@ -731,6 +841,8 @@ const TextEditor = ({ content }: any) => {
       toast.error("Please select some sources!", {
         position: "top-right",
       });
+
+      return;
     }
 
     // console.log("selectedText", selectedText);
@@ -798,6 +910,7 @@ const TextEditor = ({ content }: any) => {
         title: noteTitle,
         content: markdown,
         note_type: "human",
+        notebook_id: notebook_id,
       };
 
       // ---- 3. Chạy song song 2 API ----

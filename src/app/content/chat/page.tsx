@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import {
   Box,
   CssBaseline,
@@ -18,157 +18,228 @@ import {
   Divider,
   InputAdornment,
   ListItemButton,
+  Checkbox,
+  Snackbar,
+  Alert,
+  CircularProgress,
 } from "@mui/material";
-import Sidebar from "@/components/Editor/Sidebar";
 import { GlassCard } from "@developer-hub/liquid-glass";
 import { TbSend } from "react-icons/tb";
-import SourceIcon from "@mui/icons-material/Source"; // Icon cho nút chọn source
+import SourceIcon from "@mui/icons-material/Source";
 import SearchIcon from "@mui/icons-material/Search";
-import ArticleIcon from "@mui/icons-material/Article";
-import DescriptionIcon from "@mui/icons-material/Description";
 import CloseIcon from "@mui/icons-material/Close";
 
-import LiquidGlassWrapper from "@/components/Chat/LiquidGlass";
 import ChatBubble from "@/components/Chat/ChatBubble";
 import { useSidebar } from "@/context/SidebarContext";
 
 const MENU_ICON_URL = "/assets/starfish.png";
 const MAIN_BG_URL = "/assets/chat2.png";
 
-interface ChatMessage {
-  id: number;
+type ApiChatMsg = {
+  id: string;
+  type: "human" | "ai";
+  content: string;
+  timestamp: any;
+};
+
+type UiMsg = {
+  id: string;
   message: string;
   isUser: boolean;
+};
+
+const STORAGE_SESSION_KEY = "chat_session_id";
+const STORAGE_NOTEBOOK_KEY = "notebook_id"; // bạn đang dùng sẵn ở fetchSourcesAndNotes
+const STORAGE_MESSAGES_PREFIX = "chat_messages_";
+
+const fetchSourcesAndNotes = async () => {
+  const notebook_id = localStorage.getItem(STORAGE_NOTEBOOK_KEY);
+  if (!notebook_id) throw new Error("Missing notebook_id");
+
+  const [sourcesRes, notesRes] = await Promise.all([
+    fetch(
+      `${
+        process.env.NEXT_PUBLIC_API_NOTEBOOK
+      }/api/sources?notebook_id=${encodeURIComponent(
+        notebook_id
+      )}&limit=50&offset=0&sort_by=updated&sort_order=desc`,
+      { headers: { accept: "application/json" } }
+    ),
+    fetch(
+      `${
+        process.env.NEXT_PUBLIC_API_NOTEBOOK
+      }/api/notes?notebook_id=${encodeURIComponent(notebook_id)}`,
+      { headers: { accept: "application/json" } }
+    ),
+  ]);
+
+  if (!sourcesRes.ok || !notesRes.ok) {
+    throw new Error("Failed to fetch sources or notes");
+  }
+
+  const sources = await sourcesRes.json();
+  const notes = await notesRes.json();
+
+  return { sources, notes };
+};
+
+function mapApiMessages(apiMessages: ApiChatMsg[]): UiMsg[] {
+  return apiMessages.map((m) => ({
+    id: m.id,
+    message: m.content ?? "",
+    isUser: m.type === "human",
+  }));
 }
-
-// --- MOCK DATA & API SIMULATION ---
-
-const MOCK_MESSAGES = [
-  {
-    id: 1,
-    message: "Sáng nay build bị fail hoài, chắc do version mismatch.",
-    isUser: false,
-  },
-  { id: 2, message: "Để tôi check lại file config xem sao.", isUser: true },
-  {
-    id: 3,
-    message: "Hình như BE mới đổi endpoint mà không báo.",
-    isUser: false,
-  },
-  { id: 4, message: "À đúng rồi, tôi thấy trong log báo 404.", isUser: true },
-  {
-    id: 5,
-    message: "Tôi sẽ cập nhật tài liệu API lại cho team.",
-    isUser: false,
-  },
-  { id: 6, message: "Ok gửi tôi luôn nhé, tôi sửa FE theo.", isUser: true },
-  { id: 7, message: "UI hôm qua bạn gửi nhìn khá đẹp đó.", isUser: false },
-  { id: 8, message: "Tôi test thử animation thấy mượt hơn rồi.", isUser: true },
-  { id: 9, message: "Nhưng cái header bị lệch trên mobile.", isUser: false },
-  { id: 10, message: "Ừ để tôi chỉnh lại breakpoint.", isUser: true },
-  { id: 11, message: "Sáng nay server dev down 5 phút.", isUser: false },
-  { id: 12, message: "Tôi tưởng do code tôi làm nó crash chứ.", isUser: true },
-  { id: 13, message: "Không sao, do BE deploy nhầm lúc 8h.", isUser: false },
-  { id: 14, message: "May quá, đỡ lo.", isUser: true },
-  {
-    id: 15,
-    message: "Pagination hôm qua bạn push chạy ổn rồi đó.",
-    isUser: false,
-  },
-  { id: 16, message: "Tôi mới optimize thêm đoạn load nữa.", isUser: true },
-  {
-    id: 17,
-    message: "Flow tạo tài khoản hơi dài, có rút gọn được không?",
-    isUser: false,
-  },
-  { id: 18, message: "Được, tôi merge hai bước lại thành một.", isUser: true },
-  { id: 19, message: "Nay có họp nhanh lúc 3h chiều nha.", isUser: false },
-  { id: 20, message: "Ok để tôi chuẩn bị slide.", isUser: true },
-];
-
-const MOCK_SOURCES_DATA = {
-  notes: [
-    { id: 1, title: "Ghi chú họp team Đổi Đồ", date: "20/11/2025" },
-    { id: 2, title: "Ý tưởng UI Glassmorphism", date: "19/11/2025" },
-    { id: 3, title: "Danh sách API cần viết", date: "18/11/2025" },
-    { id: 4, title: "Bug fix scrollbar", date: "17/11/2025" },
-  ],
-  sources: [
-    { id: 101, title: "Tài liệu ReactJS nang cao.pdf", type: "PDF" },
-    { id: 102, title: "Video demo sản phẩm.mp4", type: "Video" },
-    { id: 103, title: "Slide thuyết trình.pptx", type: "Slide" },
-    { id: 104, title: "Link tham khảo Github", type: "Link" },
-    { id: 105, title: "Design System Figma", type: "Link" },
-  ],
-};
-
-// Hàm Mock API: Fetch tin nhắn lịch sử
-const fetchHistoryMessages = async () => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(MOCK_MESSAGES);
-    }, 500); // Giả lập delay mạng
-  });
-};
-
-// Hàm Mock API: Fetch danh sách Source/Note
-const fetchSourceFiles = async () => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(MOCK_SOURCES_DATA);
-    }, 300);
-  });
-};
-
-// ----------------------------------
 
 function Chat() {
   const { toggleSidebar } = useSidebar();
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-
-  // --- STATE QUẢN LÝ ---
-  const [messages, setMessages] = useState<any[]>([]); // State lưu tin nhắn
-  const [rows, setRows] = useState(2);
-  const [maxHeight, setMaxHeight] = useState("40rem");
-  const [inputMessage, setInputMessage] = useState("");
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
-  // State cho Dialog Source
+  const [rows, setRows] = useState(2);
+  const [maxHeight, setMaxHeight] = useState("40rem");
+
+  const [inputMessage, setInputMessage] = useState("");
+
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
   const [openSourceDialog, setOpenSourceDialog] = useState(false);
   const [availableSources, setAvailableSources] = useState<{
     notes: any[];
     sources: any[];
   }>({ notes: [], sources: [] });
+
   const [searchQuery, setSearchQuery] = useState("");
-  const [isLoadingMessages, setIsLoadingMessages] = useState(true);
 
-  // --- EFFECT: FETCH DATA BAN ĐẦU ---
+  const [sessionId, setSessionId] = useState<string>("");
+  const [messages, setMessages] = useState<UiMsg[]>([]);
+  const [isBootLoading, setIsBootLoading] = useState(true);
+  const [isSending, setIsSending] = useState(false);
+
+  const [toast, setToast] = useState<{
+    open: boolean;
+    severity: "success" | "info" | "warning" | "error";
+    message: string;
+  }>({ open: false, severity: "info", message: "" });
+
+  const filteredNotes = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return availableSources.notes;
+    return availableSources.notes.filter(
+      (n) =>
+        (n?.title ?? "").toLowerCase().includes(q) ||
+        (n?.created ?? "").toLowerCase().includes(q)
+    );
+  }, [availableSources.notes, searchQuery]);
+
+  const filteredSources = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return availableSources.sources;
+    return availableSources.sources.filter((s) => {
+      const title = (s?.title ?? "").toLowerCase();
+      const path = (s?.asset?.file_path ?? "").toLowerCase();
+      const url = (s?.asset?.url ?? "").toLowerCase();
+      return title.includes(q) || path.includes(q) || url.includes(q);
+    });
+  }, [availableSources.sources, searchQuery]);
+
+  const createNewChatSession = async (): Promise<string> => {
+    const DEFAULT_SESSION = "chat_session:30wpa839l1ljs289fnwf";
+
+    try {
+      const notebooks = [
+        "notebook:vs1gylamwxphz18rjc53",
+        "notebook:c37uf28s3x8t7k2uqw8l",
+      ];
+
+      const randomIndex = Math.floor(Math.random() * notebooks.length);
+      const notebook_id = notebooks[randomIndex];
+      const title = `Chat session - notebook ${randomIndex + 1}`;
+
+      const payload = { notebook_id, title };
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_NOTEBOOK}/api/chat/sessions`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      const data = await res.json();
+      if (data?.id) return data.id;
+      return DEFAULT_SESSION;
+    } catch (err) {
+      console.error("Error creating chat session:", err);
+      return DEFAULT_SESSION;
+    }
+  };
+
+  // (1) Giữ nguyên session cho tới khi logout: lấy từ localStorage, nếu chưa có thì tạo 1 lần.
   useEffect(() => {
-    const initData = async () => {
+    const init = async () => {
       try {
-        setIsLoadingMessages(true);
-        // Gọi API fetch tin nhắn cũ
-        const data: any = await fetchHistoryMessages();
-        setMessages(data);
+        setIsBootLoading(true);
 
-        // Tiện thể gọi luôn API lấy source để sẵn sàng hiển thị
-        const sourceData: any = await fetchSourceFiles();
-        setAvailableSources(sourceData);
-      } catch (error) {
-        console.error("Failed to fetch initial data", error);
+        let sid = localStorage.getItem(STORAGE_SESSION_KEY) || "";
+        if (!sid) {
+          sid = await createNewChatSession();
+          localStorage.setItem(STORAGE_SESSION_KEY, sid);
+        }
+        setSessionId(sid);
+
+        // restore messages theo session (giữ chat khi refresh)
+        const cached = localStorage.getItem(`${STORAGE_MESSAGES_PREFIX}${sid}`);
+        if (cached) {
+          try {
+            const parsed = JSON.parse(cached) as UiMsg[];
+            setMessages(Array.isArray(parsed) ? parsed : []);
+          } catch {
+            setMessages([]);
+          }
+        } else {
+          setMessages([]);
+        }
+
+        const sourceData = await fetchSourcesAndNotes();
+        setAvailableSources({
+          sources: sourceData.sources,
+          notes: sourceData.notes,
+        });
+      } catch (e) {
+        console.error(e);
+        setToast({
+          open: true,
+          severity: "error",
+          message: "Không tải được dữ liệu ban đầu.",
+        });
       } finally {
-        setIsLoadingMessages(false);
+        setIsBootLoading(false);
       }
     };
 
-    initData();
+    init();
   }, []);
+
+  // persist messages theo session
+  useEffect(() => {
+    if (!sessionId) return;
+    localStorage.setItem(
+      `${STORAGE_MESSAGES_PREFIX}${sessionId}`,
+      JSON.stringify(messages)
+    );
+  }, [messages, sessionId]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, isSending]);
 
-  // --- LOGIC XỬ LÝ TEXTAREA (GIỮ NGUYÊN) ---
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const el = e.target;
     const style = window.getComputedStyle(el);
@@ -176,69 +247,126 @@ function Chat() {
     const paddingTop = parseInt(style.paddingTop);
     const paddingBottom = parseInt(style.paddingBottom);
     const usableHeight = el.scrollHeight - paddingTop - paddingBottom;
-    let rows = Math.round(usableHeight / lineHeight);
-    rows = Math.max(2, Math.min(6, rows));
-    setRows(rows);
+    let r = Math.round(usableHeight / lineHeight);
+    r = Math.max(2, Math.min(6, r));
+    setRows(r);
   };
 
-  const calcMaxHeight = (rows: number): string => {
-    if (rows <= 2) return "40rem";
-    if (rows === 3) return "39rem";
-    if (rows === 4) return "38rem";
-    if (rows === 5) return "36rem";
+  const calcMaxHeight = (r: number): string => {
+    if (r <= 2) return "40rem";
+    if (r === 3) return "39rem";
+    if (r === 4) return "38rem";
+    if (r === 5) return "36rem";
     return "35rem";
   };
 
   useEffect(() => {
-    const newMax = calcMaxHeight(rows);
-    setMaxHeight(newMax);
+    setMaxHeight(calcMaxHeight(rows));
   }, [rows]);
 
-  // --- HANDLERS CHO DIALOG ---
   const handleOpenSourceDialog = () => setOpenSourceDialog(true);
   const handleCloseSourceDialog = () => setOpenSourceDialog(false);
 
-  // Mock API gửi tin nhắn
-  const sendMessageAPI = async (text: string): Promise<ChatMessage> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          id: Date.now(),
-          message: text,
-          isUser: true,
-        });
-      }, 300);
-    });
-  };
-
-  const mockBotReplyAPI = async (text: string): Promise<ChatMessage> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          id: Date.now() + 1,
-          message: "Tôi nhận được: " + text,
-          isUser: false,
-        });
-      }, 600);
-    });
-  };
-
+  // (3) Send thật: append human -> gọi /execute -> render messages trả về, có loading + error
   const handleSend = async () => {
-    if (!inputMessage.trim()) return;
+    const text = inputMessage.trim();
+    if (!text) {
+      setToast({
+        open: true,
+        severity: "warning",
+        message: "Không được gửi tin nhắn rỗng.",
+      });
+      return;
+    }
+    if (!sessionId) {
+      setToast({
+        open: true,
+        severity: "error",
+        message: "Chưa có session chat.",
+      });
+      return;
+    }
+    if (isSending) return;
 
-    const userText = inputMessage;
+    setInputMessage("");
 
-    setInputMessage(""); // clear input
+    // optimistic UI: thêm message của user ngay
+    const optimistic: UiMsg = {
+      id: `local-${Date.now()}`,
+      message: text,
+      isUser: true,
+    };
+    setMessages((prev) => [...prev, optimistic]);
+    setIsSending(true);
 
-    // 1. gửi message của user
-    const newUserMessage = await sendMessageAPI(userText);
+    const sourceIds = selectedIds
+      .filter((id) => id.startsWith("source:"))
+      .map((id) => ({ id }));
+    const noteIds = selectedIds
+      .filter((id) => id.startsWith("note:"))
+      .map((id) => ({ id }));
 
-    setMessages((prev) => [...prev, newUserMessage]);
+    const payload = {
+      session_id: sessionId,
+      message: text,
+      context: { sources: sourceIds, notes: noteIds },
+      model_override: "model:kv3pmgczupuc15whfoe8",
+    };
 
-    // 2. mô phỏng API trả lời AI
-    const botReply = await mockBotReplyAPI(userText);
+    try {
+      console.log(
+        "Chat Screen: Sending message payload:",
+        JSON.stringify(payload)
+      );
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_NOTEBOOK}/api/chat/execute`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
 
-    setMessages((prev) => [...prev, botReply]);
+      if (!res.ok) {
+        setToast({
+          open: true,
+          severity: "error",
+          message:
+            "Có lỗi xảy ra với server (API AI đã hết quota. Vui lòng thử lại sau hoặc đổi model)",
+        });
+        throw new Error(`HTTP ${res.status}`);
+      }
+
+      const data = await res.json();
+      console.log("Chat Screen: Received response data:", JSON.stringify(data));
+      // nếu backend trả session_id (có thể giống) thì sync lại
+      if (data?.session_id && data.session_id !== sessionId) {
+        setSessionId(data.session_id);
+        localStorage.setItem(STORAGE_SESSION_KEY, data.session_id);
+      }
+
+      // render “real conversation” theo response: { messages: [...] }
+      if (Array.isArray(data?.messages)) {
+        setMessages(mapApiMessages(data.messages as ApiChatMsg[]));
+      } else {
+        // fallback: giữ optimistic
+        setToast({
+          open: true,
+          severity: "warning",
+          message: "API không trả về danh sách messages.",
+        });
+      }
+    } catch (err) {
+      console.error("Send message error:", err);
+      setToast({
+        open: true,
+        severity: "error",
+        message:
+          "Gửi tin nhắn thất bại. (API AI đã hết quota, vui lòng thử lại sau hoặc đổi model)",
+      });
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
@@ -256,7 +384,6 @@ function Chat() {
     >
       <CssBaseline />
 
-      {/* Button mở sidebar (Giữ nguyên) */}
       <Box
         sx={{
           display: "flex",
@@ -288,7 +415,6 @@ function Chat() {
           }}
         />
 
-        {/* Chat area */}
         <Box
           sx={{
             width: "100%",
@@ -306,8 +432,6 @@ function Chat() {
               justifyContent: "space-between",
             }}
           >
-            {/* <Box sx={{ flex: 1 }}> */}
-            {/* <LiquidGlassWrapper borderRadius={14} blur={7}> */}
             <GlassCard>
               <Box
                 sx={{
@@ -328,12 +452,9 @@ function Chat() {
                   sx={{
                     flex: 1,
                     maxHeight: "75vh",
-                    overflowY: "auto", // ⚡ CHỈ SCROLL DỌC
-                    overflowX: "hidden", // ⚡ KHÔNG CHO SCROLL NGANG
-
-                    "&::-webkit-scrollbar": {
-                      width: "6px",
-                    },
+                    overflowY: "auto",
+                    overflowX: "hidden",
+                    "&::-webkit-scrollbar": { width: "6px" },
                     "&::-webkit-scrollbar-thumb": {
                       background: "rgba(0,0,0,0.5)",
                       borderRadius: "3px",
@@ -344,12 +465,26 @@ function Chat() {
                     "&::-webkit-scrollbar-track": {
                       background: "transparent",
                     },
-                    scrollbarWidth: "thin", // Firefox
+                    scrollbarWidth: "thin",
                     scrollbarColor: "rgba(0,0,0,0.5) transparent",
                   }}
                 >
-                  {/* Nếu không có message → hiển thị lời chào */}
-                  {messages.length === 0 ? (
+                  {isBootLoading ? (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        mt: 2,
+                        color: "black",
+                        opacity: 0.75,
+                        gap: 1,
+                      }}
+                    >
+                      <CircularProgress size={18} />
+                      <span>Đang tải…</span>
+                    </Box>
+                  ) : messages.length === 0 ? (
                     <div
                       style={{
                         textAlign: "center",
@@ -362,7 +497,6 @@ function Chat() {
                       Hello, how can I help you?
                     </div>
                   ) : (
-                    /* Nếu có message → render danh sách tin nhắn */
                     messages.map((msg) => (
                       <ChatBubble
                         key={msg.id}
@@ -371,6 +505,14 @@ function Chat() {
                       />
                     ))
                   )}
+
+                  {isSending && (
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <CircularProgress size={16} />
+                      <ChatBubble message="AI đang trả lời…" isUser={false} />
+                    </Box>
+                  )}
+
                   <div ref={bottomRef} />
                 </Box>
               </Box>
@@ -389,7 +531,7 @@ function Chat() {
             >
               <Box
                 sx={{
-                  flex: 1, // Đổi width: 100% thành flex: 1 để nhường chỗ cho nút Source
+                  flex: 1,
                   "& .custom-textarea": {
                     width: "100%",
                     padding: "12px 14px",
@@ -429,10 +571,11 @@ function Chat() {
                   minRows={2}
                   maxRows={6}
                   placeholder="Nhập tin nhắn..."
+                  disabled={isSending || isBootLoading}
                 />
               </Box>
 
-              {/* --- NÚT SELECT SOURCE --- */}
+              {/* Select Source */}
               <GlassCard>
                 <Box
                   onClick={handleOpenSourceDialog}
@@ -445,29 +588,50 @@ function Chat() {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    minHeight: "50px", // Cân đối với textarea
+                    minHeight: "50px",
+                    transition: "transform 0.15s, filter 0.15s",
+                    "&:hover": { transform: "translateY(-1px)" },
                   }}
                 >
                   <SourceIcon sx={{ color: "black", fontSize: 28 }} />
                 </Box>
               </GlassCard>
 
-              {/* Nút Gửi */}
+              {/* (2) Nút gửi có hover + chặn gửi rỗng (toast đã ở handleSend) */}
               <GlassCard>
                 <Box
                   onClick={handleSend}
                   sx={{
                     padding: "12px 20px",
-                    cursor: "pointer",
+                    cursor:
+                      isSending || isBootLoading ? "not-allowed" : "pointer",
                     borderRadius: "14px",
-                    backdropFilter: "blur(15px)",
                     display: "flex",
                     alignItems: "center",
                     gap: "8px",
                     minHeight: "50px",
+                    opacity: isSending || isBootLoading ? 0.6 : 1,
+                    transition:
+                      "transform 0.15s, box-shadow 0.15s, filter 0.15s",
+                    "&:hover": {
+                      transform:
+                        isSending || isBootLoading
+                          ? "none"
+                          : "translateY(-1px)",
+                      filter:
+                        isSending || isBootLoading
+                          ? "none"
+                          : "brightness(1.05)",
+                    },
+                    "&:active": {
+                      transform:
+                        isSending || isBootLoading ? "none" : "translateY(0px)",
+                    },
                   }}
                 >
-                  <span style={{ color: "black", fontWeight: "600" }}>Gửi</span>
+                  <span style={{ color: "black", fontWeight: "600" }}>
+                    {isSending ? "Đang gửi" : "Gửi"}
+                  </span>
                   <TbSend size={20} color="black" />
                 </Box>
               </GlassCard>
@@ -476,7 +640,7 @@ function Chat() {
         </Box>
       </Box>
 
-      {/* --- DIALOG CHỌN SOURCE --- */}
+      {/* Dialog chọn source */}
       <Dialog
         open={openSourceDialog}
         onClose={handleCloseSourceDialog}
@@ -503,8 +667,8 @@ function Chat() {
             <CloseIcon />
           </IconButton>
         </DialogTitle>
+
         <DialogContent dividers>
-          {/* Ô tìm kiếm */}
           <TextField
             fullWidth
             variant="outlined"
@@ -522,7 +686,7 @@ function Chat() {
             sx={{ mb: 2, mt: 1 }}
           />
 
-          {/* Phần Notes */}
+          {/* Notes */}
           <Box sx={{ mb: 2 }}>
             <Typography
               variant="subtitle1"
@@ -530,15 +694,14 @@ function Chat() {
             >
               Notes
             </Typography>
+
             <Box
               sx={{
                 maxHeight: "150px",
                 overflowY: "auto",
                 border: "1px solid #eee",
                 borderRadius: "8px",
-                "&::-webkit-scrollbar": {
-                  width: "6px",
-                },
+                "&::-webkit-scrollbar": { width: "6px" },
                 "&::-webkit-scrollbar-thumb": {
                   background: "rgba(0,0,0,0.5)",
                   borderRadius: "3px",
@@ -546,25 +709,22 @@ function Chat() {
                 "&::-webkit-scrollbar-thumb:hover": {
                   background: "rgba(0,0,0,0.8)",
                 },
-                "&::-webkit-scrollbar-track": {
-                  background: "transparent",
-                },
-                scrollbarWidth: "thin", // Firefox
+                "&::-webkit-scrollbar-track": { background: "transparent" },
+                scrollbarWidth: "thin",
                 scrollbarColor: "rgba(0,0,0,0.5) transparent",
               }}
             >
               <List dense>
-                {availableSources.notes.length > 0 ? (
-                  availableSources.notes.map((note) => (
-                    <ListItem key={note.id}>
-                      <ListItemButton>
-                        <ListItemIcon sx={{ minWidth: "35px" }}>
-                          <DescriptionIcon color="action" fontSize="small" />
+                {filteredNotes.length > 0 ? (
+                  filteredNotes.map((note) => (
+                    <ListItem key={note.id} disablePadding>
+                      <ListItemButton onClick={() => toggleSelect(note.id)}>
+                        <ListItemIcon sx={{ minWidth: 35 }}>
+                          <Checkbox checked={selectedIds.includes(note.id)} />
                         </ListItemIcon>
                         <ListItemText
                           primary={note.title}
-                          secondary={note.date}
-                          primaryTypographyProps={{ fontSize: "0.95rem" }}
+                          secondary={note.created}
                         />
                       </ListItemButton>
                     </ListItem>
@@ -580,7 +740,7 @@ function Chat() {
 
           <Divider sx={{ my: 2 }} />
 
-          {/* Phần Sources */}
+          {/* Sources */}
           <Box>
             <Typography
               variant="subtitle1"
@@ -588,15 +748,14 @@ function Chat() {
             >
               Source Files
             </Typography>
+
             <Box
               sx={{
                 maxHeight: "150px",
                 overflowY: "auto",
                 border: "1px solid #eee",
                 borderRadius: "8px",
-                "&::-webkit-scrollbar": {
-                  width: "6px",
-                },
+                "&::-webkit-scrollbar": { width: "6px" },
                 "&::-webkit-scrollbar-thumb": {
                   background: "rgba(0,0,0,0.5)",
                   borderRadius: "3px",
@@ -604,25 +763,22 @@ function Chat() {
                 "&::-webkit-scrollbar-thumb:hover": {
                   background: "rgba(0,0,0,0.8)",
                 },
-                "&::-webkit-scrollbar-track": {
-                  background: "transparent",
-                },
-                scrollbarWidth: "thin", // Firefox
+                "&::-webkit-scrollbar-track": { background: "transparent" },
+                scrollbarWidth: "thin",
                 scrollbarColor: "rgba(0,0,0,0.5) transparent",
               }}
             >
               <List dense>
-                {availableSources.sources.length > 0 ? (
-                  availableSources.sources.map((src) => (
-                    <ListItem key={src.id}>
-                      <ListItemButton>
-                        <ListItemIcon sx={{ minWidth: "35px" }}>
-                          <ArticleIcon color="action" fontSize="small" />
+                {filteredSources.length > 0 ? (
+                  filteredSources.map((src) => (
+                    <ListItem key={src.id} disablePadding>
+                      <ListItemButton onClick={() => toggleSelect(src.id)}>
+                        <ListItemIcon sx={{ minWidth: 35 }}>
+                          <Checkbox checked={selectedIds.includes(src.id)} />
                         </ListItemIcon>
                         <ListItemText
                           primary={src.title}
-                          secondary={src.type}
-                          primaryTypographyProps={{ fontSize: "0.95rem" }}
+                          secondary={src.asset?.file_path || src.asset?.url}
                         />
                       </ListItemButton>
                     </ListItem>
@@ -637,6 +793,23 @@ function Chat() {
           </Box>
         </DialogContent>
       </Dialog>
+
+      {/* Toast */}
+      <Snackbar
+        open={toast.open}
+        autoHideDuration={2500}
+        onClose={() => setToast((t) => ({ ...t, open: false }))}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setToast((t) => ({ ...t, open: false }))}
+          severity={toast.severity}
+          variant="filled"
+          sx={{ width: "100%" }}
+        >
+          {toast.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

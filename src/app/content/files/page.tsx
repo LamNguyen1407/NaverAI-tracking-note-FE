@@ -22,7 +22,6 @@ const fileMetadataCache = {
   documents: null as any[] | null,
 };
 
-
 function MarkdownPreview({ blob }: { blob: Blob }) {
   const [text, setText] = useState("");
 
@@ -48,10 +47,10 @@ function MarkdownPreview({ blob }: { blob: Blob }) {
 function Files() {
   const { toggleSidebar } = useSidebar();
 
- const { reloadFlag, shouldReload, clearReloadFlag } = useFileStore();
+  const { reloadFlag, shouldReload, clearReloadFlag } = useFileStore();
 
- const {user_id} = useUserStore()
-
+  const { user_id } = useUserStore();
+  const [isOpening, setIsOpening] = useState(false);
 
   // const handleOpen = async (file: any) => {
   //   setSelectedFile(file);
@@ -63,17 +62,63 @@ function Files() {
   //   setOpenDialog(true);
   // };
   const handleOpen = async (file: any) => {
-    setSelectedFile(file);
-    const res = await fetch(file.preview_url);
-    console.log(res);
-    const blob = await res.blob();
+    try {
+      setIsOpening(true);
 
-    setFileBlob(blob);
-    setOpenDialog(true);
+      // LINK
+      if (file.file_name?.endsWith(".json")) {
+        const sourceId = file.file_name.replace(".json", "");
+        let data = sourceCache[sourceId];
+
+        if (!data) {
+          const res = await fetch(
+            `${process.env.NEXT_PUBLIC_API_NOTEBOOK}/api/sources/${sourceId}`
+          );
+          data = await res.json();
+
+          setSourceCache((prev) => ({
+            ...prev,
+            [sourceId]: data,
+          }));
+        }
+
+        setSelectedFile({
+          ...file,
+          title: data.title,
+          content: data.full_text,
+          url: data.asset?.url,
+          type: "link",
+        });
+
+        setOpenDialog(true);
+        return;
+      }
+
+      // TEXT
+      if (file.file_name?.endsWith(".txt")) {
+        setSelectedFile({ ...file, type: "text" });
+        const res = await fetch(file.preview_url);
+        const blob = await res.blob();
+        setFileBlob(blob);
+        setOpenDialog(true);
+        return;
+      }
+
+      // FILE
+      setSelectedFile(file);
+      const res = await fetch(file.preview_url);
+      const blob = await res.blob();
+      setFileBlob(blob);
+      setOpenDialog(true);
+    } finally {
+      setIsOpening(false);
+    }
   };
 
   const handleClose = () => {
     setOpenDialog(false);
+    setFileBlob(null);
+    setSelectedFile(null);
   };
 
   const [openDialog, setOpenDialog] = useState(false);
@@ -81,6 +126,8 @@ function Files() {
   const [fileBlob, setFileBlob] = useState<Blob | null>(null);
   const [notes, setNotes] = useState<any[]>([]);
   const [documents, setDocuments] = useState<any[]>([]);
+
+  const [sourceCache, setSourceCache] = useState<Record<string, any>>({});
 
   useEffect(() => {
     if (!openDialog || !fileBlob) return;
@@ -102,27 +149,31 @@ function Files() {
   }, [openDialog]);
 
   useEffect(() => {
-    if(!user_id)  return;
+    if (!user_id) return;
     const fetchFiles = async () => {
       try {
         //Reset cache
-        if(shouldReload){
+        if (shouldReload) {
           fileMetadataCache.notes = null;
           fileMetadataCache.documents = null;
           clearReloadFlag();
         }
-      
+
         //lay data từ cached
         if (fileMetadataCache.notes && fileMetadataCache.documents) {
           setNotes(fileMetadataCache.notes);
           setDocuments(fileMetadataCache.documents);
           return;
-      }
+        }
 
         // Lấy Note và Document
         const [noteRes, docRes] = await Promise.all([
-          fetch(`${process.env.NEXT_PUBLIC_API}/files/metadata/note?user_id=${user_id}`),
-          fetch(`${process.env.NEXT_PUBLIC_API}/files/metadata/document?user_id=${user_id}`),
+          fetch(
+            `${process.env.NEXT_PUBLIC_API}/files/metadata/note?user_id=${user_id}`
+          ),
+          fetch(
+            `${process.env.NEXT_PUBLIC_API}/files/metadata/document?user_id=${user_id}`
+          ),
         ]);
 
         const [noteData, docData] = await Promise.all([
@@ -143,8 +194,7 @@ function Files() {
     };
 
     fetchFiles();
-  }, [user_id,reloadFlag]);
-
+  }, [user_id, reloadFlag]);
 
   return (
     <Box
@@ -289,9 +339,10 @@ function Files() {
 
             <Box
               sx={{
-                maxHeight: "35vh",
+                maxHeight: "70vh",
                 overflowY: "auto",
-                paddingRight: "6px",
+                overflowX: "hidden",
+                paddingRight: "5px",
 
                 "&::-webkit-scrollbar": { width: "6px" },
                 "&::-webkit-scrollbar-thumb": {
@@ -305,13 +356,39 @@ function Files() {
             >
               <Grid container spacing={2}>
                 {documents.map((doc) => (
-                  <DocumentList doc={doc} handleOpen={handleOpen} />
+                  <DocumentList
+                    doc={doc}
+                    handleOpen={handleOpen}
+                    sourceCache={sourceCache}
+                    setSourceCache={setSourceCache}
+                  />
                 ))}
               </Grid>
             </Box>
           </Box>
         </Box>
       </Box>
+
+      {isOpening && (
+        <Box
+          sx={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 2000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(0,0,0,0.4)",
+            backdropFilter: "blur(6px)",
+            color: "white",
+            fontSize: "1.2rem",
+            fontWeight: 600,
+          }}
+        >
+          Loading content...
+        </Box>
+      )}
+
       <Dialog open={openDialog} onClose={handleClose} maxWidth="md" fullWidth>
         <DialogTitle>
           {selectedFile?.title || selectedFile?.file_name}
@@ -349,6 +426,36 @@ function Files() {
                 style={{ height: "80vh", overflow: "auto" }}
               />
             )} */}
+          {selectedFile?.type === "link" && (
+            <Box
+              sx={{
+                height: "80vh",
+                overflowY: "auto",
+                padding: 2,
+                background: "white",
+                borderRadius: "8px",
+                whiteSpace: "pre-wrap",
+              }}
+            >
+              {selectedFile.content || "Processing..."}
+            </Box>
+          )}
+
+          {selectedFile?.type === "text" && fileBlob && (
+            <Box
+              sx={{
+                height: "80vh",
+                overflowY: "auto",
+                padding: 2,
+                background: "white",
+                borderRadius: "8px",
+                whiteSpace: "pre-wrap",
+                fontFamily: "monospace",
+              }}
+            >
+              <MarkdownPreview blob={fileBlob} />
+            </Box>
+          )}
 
           {/* MARKDOWN FILE */}
           {selectedFile?.file_name?.endsWith(".md") && fileBlob && (

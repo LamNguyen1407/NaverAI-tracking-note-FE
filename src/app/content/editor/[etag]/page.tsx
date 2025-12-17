@@ -17,7 +17,7 @@ const MENU_ICON_URL = "/assets/starfish.png";
 function App() {
   const { toggleSidebar } = useSidebar();
 
-  const {user_id} = useUserStore()
+  const { user_id } = useUserStore();
 
   const params = useParams();
   // ensure etag is a single string (useParams may return string | string[] | undefined)
@@ -35,7 +35,13 @@ function App() {
         const metadataRes = await fetch(
           `${process.env.NEXT_PUBLIC_API}/files/metadata/note/${etag}?user_id=${user_id}`
         );
+
+        const metadataUrl = `${process.env.NEXT_PUBLIC_API}/files/metadata/note/${etag}?user_id=${user_id}`;
+        console.log("Fetching metadata from:");
+        console.log(metadataUrl);
+
         const metadataData = await metadataRes.json();
+        console.log("Preview URL:", metadataData.preview_url);
 
         const contentRes = await fetch(metadataData.preview_url);
         const contentText = await contentRes.text();

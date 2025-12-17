@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import NoteAltIcon from '@mui/icons-material/NoteAlt';
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import NoteAltIcon from "@mui/icons-material/NoteAlt";
 import {
   Drawer,
   Box,
@@ -61,57 +61,55 @@ interface FileMeta {
 // };
 
 const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
-
   const [selectedNote, setSelectedNote] = useState<FileMeta | null>(null);
   const [notes, setNotes] = useState<FileMeta[]>([]);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const {user_id} = useUserStore()
-  
+  const { user_id } = useUserStore();
 
   const router = useRouter();
   const pathname = usePathname();
 
-  const {reloadNoteFlag} = useFileStore()
-
+  const { reloadNoteFlag } = useFileStore();
 
   const handleLogout = () => {
+    localStorage.removeItem("chat_session_id");
     router.push("/login");
   };
 
   const handleClick = (file: FileMeta) => {
     setSelectedNote(file);
     router.push(`/content/editor/${file.etag}`);
-  }
+  };
 
   const handleCreateNote = () => {
     router.push("/content/editor");
-  }
-
-    const currentTab = useMemo(() => {
-      if (pathname.includes("/content/files")) return "Files";
-      if (pathname.includes("/content/chat")) return "Chat";
-      return "Note"; // Default
-    }, [pathname]);
-
-useEffect(() => {
-  if (!user_id) return; // ❌ chưa load xong, bỏ qua
-
-  const fetchNotes = async () => {
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API}/files/metadata/note?user_id=${user_id}`
-      );
-      const json = await res.json();
-      setNotes(json.files);
-    } catch (e) {
-      console.error("Failed to fetch note metadata", e);
-    }
   };
 
-  fetchNotes();
-}, [user_id, reloadNoteFlag]);
+  const currentTab = useMemo(() => {
+    if (pathname.includes("/content/files")) return "Files";
+    if (pathname.includes("/content/chat")) return "Chat";
+    return "Note"; // Default
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!user_id) return; // ❌ chưa load xong, bỏ qua
+
+    const fetchNotes = async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API}/files/metadata/note?user_id=${user_id}`
+        );
+        const json = await res.json();
+        setNotes(json.files);
+      } catch (e) {
+        console.error("Failed to fetch note metadata", e);
+      }
+    };
+
+    fetchNotes();
+  }, [user_id, reloadNoteFlag]);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: string) => {
     // Không setTab ở đây, chỉ điều hướng.
@@ -121,7 +119,7 @@ useEffect(() => {
         : newValue === "Files"
         ? "/content/files"
         : "/content/chat";
-    
+
     if (pathname !== target) {
       router.push(target);
     }
@@ -232,71 +230,84 @@ useEffect(() => {
             </Tabs>
 
             {/* Nội dung thay đổi theo tab */}
-              {/* Note List */}
-                <List>
-                  {currentTab === "Note" && 
-                  <Button 
-                        onClick={() => handleCreateNote()}
-                        startIcon={<NoteAltIcon sx={{ fontSize: 22 }} />}
-                        sx={{
-                          width: "100%",
-                          padding: "12px 16px",
-                          marginBottom: "20px",
-                          backgroundColor: "rgba(1, 62, 106, 0.6)",
-                          backdropFilter: "blur(10px)",
-                          border: "1px solid rgba(255, 255, 255, 0.18)",
-                          borderRadius: "12px",
-                          color: "white",
-                          fontWeight: 600,
-                          fontSize: "14px",
-                          textTransform: "none",
-                          transition: "all 0.3s ease",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: 1,
-                          "&:hover": {
-                            backgroundColor: "rgba(67, 209, 255, 0.5)",
-                            border: "1px solid rgba(67, 209, 255, 0.8)",
-                            transform: "translateY(-2px)",
-                            boxShadow: "0 8px 16px rgba(67, 209, 255, 0.3)",
-                          },
-                          "&:active": {
-                            transform: "translateY(0px)",
-                          },
-                        }}
-                      >
-                        Create Note
-                      </Button>
-                  }
-                  {currentTab === "Note" && 
-                  notes.map((item , index ) => (
-                    <ListItemButton
-                      className={selectedNote?.etag === item.etag ? "selected" : ""}
-                      onClick={() => handleClick(item)}
-                      key={index}
-                      sx={{
-                        ...glassmorphismStyle,
-                        marginBottom: "10px",
-                        "&:hover": {
-                          backgroundColor: "rgba(67, 209, 255, 0.4)",
-                        },
-                        "&:hover .MuiListItemText-primary": {
-                          color: "black", // đổi màu chữ khi hover
-                        },
-                      }}
-                    >
-                      <ListItemText primary={item.file_name} sx={{ color: "white" }} />
-                    </ListItemButton>
-                  ))}
-
-                    {currentTab === "Files" && 
-                    <>
-                      <CustomButton onClick={() => setIsDialogOpen(true)} startIcon={<CloudUploadIcon sx={{ fontSize: 22 }} />}>Upload File</CustomButton>
-                      <DialogUpload open={isDialogOpen} onClose={() => setIsDialogOpen(false)} />
-                      </>
+            {/* Note List */}
+            <List>
+              {currentTab === "Note" && (
+                <Button
+                  onClick={() => handleCreateNote()}
+                  startIcon={<NoteAltIcon sx={{ fontSize: 22 }} />}
+                  sx={{
+                    width: "100%",
+                    padding: "12px 16px",
+                    marginBottom: "20px",
+                    backgroundColor: "rgba(1, 62, 106, 0.6)",
+                    backdropFilter: "blur(10px)",
+                    border: "1px solid rgba(255, 255, 255, 0.18)",
+                    borderRadius: "12px",
+                    color: "white",
+                    fontWeight: 600,
+                    fontSize: "14px",
+                    textTransform: "none",
+                    transition: "all 0.3s ease",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 1,
+                    "&:hover": {
+                      backgroundColor: "rgba(67, 209, 255, 0.5)",
+                      border: "1px solid rgba(67, 209, 255, 0.8)",
+                      transform: "translateY(-2px)",
+                      boxShadow: "0 8px 16px rgba(67, 209, 255, 0.3)",
+                    },
+                    "&:active": {
+                      transform: "translateY(0px)",
+                    },
+                  }}
+                >
+                  Create Note
+                </Button>
+              )}
+              {currentTab === "Note" &&
+                notes.map((item, index) => (
+                  <ListItemButton
+                    className={
+                      selectedNote?.etag === item.etag ? "selected" : ""
                     }
-                </List>
+                    onClick={() => handleClick(item)}
+                    key={index}
+                    sx={{
+                      ...glassmorphismStyle,
+                      marginBottom: "10px",
+                      "&:hover": {
+                        backgroundColor: "rgba(67, 209, 255, 0.4)",
+                      },
+                      "&:hover .MuiListItemText-primary": {
+                        color: "black", // đổi màu chữ khi hover
+                      },
+                    }}
+                  >
+                    <ListItemText
+                      primary={item.file_name}
+                      sx={{ color: "white" }}
+                    />
+                  </ListItemButton>
+                ))}
+
+              {currentTab === "Files" && (
+                <>
+                  <CustomButton
+                    onClick={() => setIsDialogOpen(true)}
+                    startIcon={<CloudUploadIcon sx={{ fontSize: 22 }} />}
+                  >
+                    Upload File
+                  </CustomButton>
+                  <DialogUpload
+                    open={isDialogOpen}
+                    onClose={() => setIsDialogOpen(false)}
+                  />
+                </>
+              )}
+            </List>
           </Box>
 
           <Box

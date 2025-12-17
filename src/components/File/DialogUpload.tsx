@@ -40,6 +40,8 @@ const DialogUpload = ({ open, onClose }: DialogUploadProps) => {
     setTab(newValue);
   };
 
+  const notebook_id = localStorage.getItem("notebook_id");
+
   // ----------- UPLOAD FILE --------------
 
   const handleUploadFile = async (file: File | null) => {
@@ -80,6 +82,9 @@ const DialogUpload = ({ open, onClose }: DialogUploadProps) => {
     formDataNotebook.append("embed", "true");
     formDataNotebook.append("delete_source", "false");
     formDataNotebook.append("async_processing", "true");
+    if (notebook_id) {
+      formDataNotebook.append("notebook_id", notebook_id);
+    }
 
     try {
       setIsLoadingFile(true);
@@ -150,12 +155,16 @@ const DialogUpload = ({ open, onClose }: DialogUploadProps) => {
   const handleUploadLink = async (url: string) => {
     try {
       setIsLoadingLink(true);
+
       const formLink = new FormData();
       formLink.append("url", url);
       formLink.append("type", "link");
       formLink.append("embed", "true");
       formLink.append("delete_source", "false");
       formLink.append("async_processing", "true");
+      if (notebook_id) {
+        formLink.append("notebook_id", notebook_id);
+      }
 
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_NOTEBOOK}/api/sources`,
@@ -164,15 +173,44 @@ const DialogUpload = ({ open, onClose }: DialogUploadProps) => {
           body: formLink,
         }
       );
+
       if (!res.ok) {
         const err = await res.json();
         toast.error(err.detail || "Upload Link failed");
         return;
       }
+
       const result = await res.json();
+      console.log("Upload Link result:", result);
+      const sourceId = result.id;
+
+      // tạo file trống, tên file = source id
+      const emptyFile = new File([""], `${sourceId}.json`, {
+        type: "application/json",
+      });
+
+      // upload file placeholder lên MinIO
+      const formDataMinio = new FormData();
+      formDataMinio.append("file", emptyFile);
+
+      const resMinio = await fetch(
+        `${process.env.NEXT_PUBLIC_API}/files/upload/document?user_id=${user_id}`,
+        {
+          method: "POST",
+          body: formDataMinio,
+        }
+      );
+
+      if (!resMinio.ok) {
+        const err = await resMinio.json();
+        toast.error(err.message || "Upload Link failed");
+        return;
+      }
+
       toast.success(result.message || "Upload Link successful!");
+      triggerReload();
       onClose();
-    } catch (err) {
+    } catch {
       toast.error("An unexpected error occurred. Please try again.");
     } finally {
       setIsLoadingLink(false);
@@ -183,29 +221,66 @@ const DialogUpload = ({ open, onClose }: DialogUploadProps) => {
   const handleUploadText = async (content: string) => {
     try {
       setIsLoadingText(true);
+
       const formText = new FormData();
       formText.append("content", content);
       formText.append("type", "text");
       formText.append("embed", "true");
       formText.append("delete_source", "false");
       formText.append("async_processing", "true");
+      if (notebook_id) {
+        formText.append("notebook_id", notebook_id);
+      }
 
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_NOTEBOOK}/api/sources`,
-        {
+      // tạo file txt từ content
+      const now = new Date();
+      const fileName = `text_${now.getFullYear()}${String(
+        now.getMonth() + 1
+      ).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}_${String(
+        now.getHours()
+      ).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}.txt`;
+
+      const textFile = new File([content], fileName, {
+        type: "text/plain",
+      });
+
+      // upload file txt lên MinIO
+      const formDataMinio = new FormData();
+      formDataMinio.append("file", textFile);
+
+      const [resNotebook, resMinio] = await Promise.all([
+        fetch(`${process.env.NEXT_PUBLIC_API_NOTEBOOK}/api/sources`, {
           method: "POST",
           body: formText,
-        }
-      );
-      if (!res.ok) {
-        const err = await res.json();
-        toast.error(err.detail || "Upload Text failed");
+        }),
+        fetch(
+          `${process.env.NEXT_PUBLIC_API}/files/upload/document?user_id=${user_id}`,
+          {
+            method: "POST",
+            body: formDataMinio,
+          }
+        ),
+      ]);
+
+      if (!resNotebook.ok || !resMinio.ok) {
+        const errNotebook = !resNotebook.ok
+          ? await resNotebook.json().catch(() => null)
+          : null;
+        const errMinio = !resMinio.ok
+          ? await resMinio.json().catch(() => null)
+          : null;
+
+        toast.error(
+          errNotebook?.detail || errMinio?.message || "Upload Text failed"
+        );
         return;
       }
-      const result = await res.json();
+
+      const result = await resNotebook.json();
       toast.success(result.message || "Upload Text successful!");
+      triggerReload();
       onClose();
-    } catch (err) {
+    } catch {
       toast.error("An unexpected error occurred. Please try again.");
     } finally {
       setIsLoadingText(false);
@@ -286,9 +361,7 @@ const DialogUpload = ({ open, onClose }: DialogUploadProps) => {
               />
             </Button>
 
-            <Box sx={{ mt: 1, fontSize: 14 }}>
-              Note: PDF, DOC, DOCX, MP4, M4A
-            </Box>
+            <Box sx={{ mt: 1, fontSize: 14 }}>Note: PDF, DOC, DOCX</Box>
           </Box>
         )}
       </DialogContent>

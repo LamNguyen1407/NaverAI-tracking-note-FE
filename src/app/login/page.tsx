@@ -14,8 +14,7 @@ import { useUserStore } from "@/stores/userStore";
 export default function HomePage() {
   const router = useRouter();
 
-  const {setUser} = useUserStore();
-
+  const { setUser } = useUserStore();
 
   const {
     register,
@@ -40,6 +39,7 @@ export default function HomePage() {
       }
 
       const result = await res.json();
+      // console.log("Login successful:", result);
 
       toast.success("Login successful!");
 
@@ -47,6 +47,7 @@ export default function HomePage() {
 
       // store token
       localStorage.setItem("user_id", result.session.user.id);
+      localStorage.setItem("notebook_id", result.session.user.notebook_id);
       localStorage.setItem("access_token", result.session.access_token);
 
       router.push("/content/editor");
